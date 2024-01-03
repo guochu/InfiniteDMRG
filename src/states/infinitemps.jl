@@ -1,0 +1,58 @@
+abstract type AbstractInfiniteMPS{A <: MPSTensor} <: AbstractInfiniteTN{A} end
+"""
+	struct InfiniteMPS{A <: MPSTensor, B <: MPSBondTensor} 
+"""
+struct InfiniteMPS{A <: MPSTensor, B <: MPSBondTensor} <: AbstractInfiniteMPS{A}
+	data::PeriodicArray{A, 1}
+	svectors::PeriodicArray{B, 1}
+
+function InfiniteMPS(data::PeriodicArray{A, 1}, svectors::PeriodicArray{B, 1}) where {A<:MPSTensor, B<:MPSBondTensor}
+	@assert length(data) == length(svectors)
+	check_mps_spaces(data)	
+	return new{A, B}(data, svectors)
+end
+
+function InfiniteMPS(data::PeriodicArray{A, 1}) where {A<:MPSTensor}
+	check_mps_spaces(data)	
+	T = real(scalartype(A))
+	B = bondtensortype(spacetype(A), Diagonal{T, Vector{T}})
+	svectors = PeriodicArray{B, 1}(undef, length(data))
+	for i in 1:length(data)
+		svectors[i] = Diagonal(id(Matrix{T}, space_l(data[i])))
+	end
+	return new{A, B}(data, svectors)
+end 
+
+end
+
+InfiniteMPS(data::AbstractVector{<:MPSTensor}, svectors::AbstractVector{<:MPSBondTensor}) = InfiniteMPS(PeriodicArray(data), PeriodicArray(svectors))
+InfiniteMPS(data::AbstractVector{<:MPSTensor}) = InfiniteMPS(PeriodicArray(data))
+
+function Base.getproperty(psi::InfiniteMPS, s::Symbol)
+	if s == :s
+		return MPSBondView(psi)
+	else
+		return getfield(psi, s)
+	end
+end
+
+function Base.setindex!(psi::InfiniteMPS, v::MPSTensor, i::Int)
+	return setindex!(psi.data, v, i)
+end 
+function Base.copy(psi::InfiniteMPS) 
+	if svectors_uninitialized(psi)
+		return InfiniteMPS(copy(psi.data))
+	else
+		return InfiniteMPS(copy(psi.data), copy(psi.svectors))
+	end
+end
+
+DMRG.svectors_uninitialized(psi::InfiniteMPS) = any(x->!isassigned(psi.svectors, x), 1:length(psi))
+
+
+function check_mps_spaces(data::PeriodicArray)
+	@assert !isempty(data)
+	for i in 1:length(data)
+		(space_r(data[i])' == space_l(data[i+1])) || throw(SpaceMismatch())
+	end
+end
