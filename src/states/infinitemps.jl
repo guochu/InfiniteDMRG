@@ -49,6 +49,14 @@ end
 
 DMRG.svectors_uninitialized(psi::InfiniteMPS) = any(x->!isassigned(psi.svectors, x), 1:length(psi))
 
+function Base.convert(::Type{<:InfiniteMPS}, psi::MPS)
+	(space_l(psi) == space_r(psi)') || throw(SpaceMismatch("boundary space mismatch"))
+	if svectors_uninitialized(psi)
+		return InfiniteMPS(psi.data)
+	else
+		return InfiniteMPS(psi.data, psi.svectors[1:length(psi)])
+	end
+end
 
 function check_mps_spaces(data::PeriodicArray)
 	@assert !isempty(data)

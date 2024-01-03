@@ -1,6 +1,6 @@
 
 
-function InfiniteMPS(f, ::Type{T}, physpaces::Vector{S}, virtualpaces::Vector{S}) where {T <: Number, S <: ElementarySpace}
+function InfiniteMPS(f, ::Type{T}, physpaces::AbstractVector{S}, virtualpaces::AbstractVector{S}) where {T <: Number, S <: ElementarySpace}
 	@assert length(physpaces) == length(virtualpaces)
 	any(x -> dim(x)==0, virtualpaces) &&  @warn "auxiliary space is empty"
 	virtualpaces2 = PeriodicArray(virtualpaces)
@@ -8,7 +8,7 @@ function InfiniteMPS(f, ::Type{T}, physpaces::Vector{S}, virtualpaces::Vector{S}
 	return InfiniteMPS(data)
 end
 
-function InfiniteMPS(f, ::Type{T}, physpaces::Vector{S}, maxvirtualspace::S; right::S=oneunit(S)) where {T <: Number, S <: ElementarySpace}
+function InfiniteMPS(f, ::Type{T}, physpaces::AbstractVector{S}, maxvirtualspace::S; right::S=oneunit(S)) where {T <: Number, S <: ElementarySpace}
 	L = length(physpaces)
 	virtualpaces = Vector{S}(undef, L+1)
 	virtualpaces[1] = right
@@ -23,7 +23,7 @@ function InfiniteMPS(f, ::Type{T}, physpaces::Vector{S}, maxvirtualspace::S; rig
 end
 
 
-function prodimps(::Type{T}, physpaces::Vector{S}, physectors::Vector; right::S=oneunit(S)) where {T <: Number, S <: ElementarySpace}
+function prodimps(::Type{T}, physpaces::AbstractVector{S}, physectors::AbstractVector; right::S=oneunit(S)) where {T <: Number, S <: ElementarySpace}
 	L = length(physpaces)
 	(L == length(physectors)) || throw(DimensionMismatch())
 	physectors = [convert(sectortype(S), item) for item in physectors]
@@ -45,9 +45,9 @@ function prodimps(::Type{T}, physpaces::Vector{S}, physectors::Vector; right::S=
 	end
 	return InfiniteMPS(ones, T, physpaces, virtualpaces[1:L])
 end
-prodimps(::Type{T}, physpace::S, physectors::Vector; kwargs...) where {T <: Number, S <: ElementarySpace} = prodimps(T, [physpace for i in 1:length(physectors)], physectors; kwargs...)
-prodimps(physpaces::Vector{S}, physectors::Vector; kwargs...) where {S <: ElementarySpace} = prodimps(Float64, physpaces, physectors; kwargs...)
-prodimps(physpace::S, physectors::Vector; kwargs...) where {S <: ElementarySpace} = prodimps(Float64, physpace, physectors; kwargs...)
+prodimps(::Type{T}, physpace::S, physectors::AbstractVector; kwargs...) where {T <: Number, S <: ElementarySpace} = prodimps(T, [physpace for i in 1:length(physectors)], physectors; kwargs...)
+prodimps(physpaces::AbstractVector{S}, physectors::AbstractVector; kwargs...) where {S <: ElementarySpace} = prodimps(Float64, physpaces, physectors; kwargs...)
+prodimps(physpace::S, physectors::AbstractVector; kwargs...) where {S <: ElementarySpace} = prodimps(Float64, physpace, physectors; kwargs...)
 
 
 """
@@ -58,10 +58,10 @@ Return a random infinite MPS.
 Each virtual space has multiplicity 1 to allow the largest number of different 
 quantum numbers to be explored under bond dimension D
 """
-function randomimps(::Type{T}, physpaces::Vector{S}; D::Int, right::S=oneunit(S)) where {T <: Number, S <: ElementarySpace}
+function randomimps(::Type{T}, physpaces::AbstractVector{S}; D::Int, right::S=oneunit(S)) where {T <: Number, S <: ElementarySpace}
 	virtualpaces = DMRG._max_mps_virtual_spaces(physpaces, D, right, right)
 	r = InfiniteMPS(randn, T, physpaces, virtualpaces[1:length(physpaces)])
 	canonicalize!(r, alg=Orthogonalize(TK.SVD(), trunc, normalize=true))
 	return r
 end
-randomimps(physpaces::Vector{S}; kwargs...) where {S <: ElementarySpace} = randomimps(Float64, physpaces; kwargs...)
+randomimps(physpaces::AbstractVector{S}; kwargs...) where {S <: ElementarySpace} = randomimps(Float64, physpaces; kwargs...)
