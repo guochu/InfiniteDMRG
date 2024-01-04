@@ -1,0 +1,13 @@
+name = "InfiniteDMRG"
+uuid = "c4d23ee2-b445-4f35-9968-b1d50be634b8"
+authors = ["Guo Chu <guochu604b@gmail.com>"]
+version = "0.0.1"
+
+
+[deps]
+DMRG = "1240110f-4488-488b-9691-4f58b4220f75"
+KrylovKit = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+SphericalTensors = "810931ec-fc2f-499d-8094-ffc35d8d9f19"
