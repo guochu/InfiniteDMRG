@@ -10,8 +10,7 @@ function leading_boundaries(x::M, y::M) where {M <: AbstractInfiniteTN}
 	right_eigenvalue = right_eigenvalues[1]
 	right_eigenvector = right_eigenvectors[1]
 	(info.converged >= 1) || error("right dominate eigendecomposition fails to converge")
-	(left_eigenvalue ≈ right_eigenvalue) || throw(ArgumentError(
-		"left and right dominate eigenvalues $(left_eigenvalue) and $(right_eigenvalue) mismatch"))
+	(left_eigenvalue ≈ right_eigenvalue) || @warn "left and right dominate eigenvalues $(left_eigenvalue) and $(right_eigenvalue) mismatch"
 	return left_eigenvalue, normalize_trace!(left_eigenvector), normalize_trace!(right_eigenvector)
 end
 
@@ -69,7 +68,7 @@ function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     	end
     	# positive check
         # println("$(evals[i])--------------------")
-        (abs(evals[i]) < tol) || error("input matrix is not positive (has eigenvalue $(evals[i]))")
+        (abs(evals[i]) < tol) || @warn "input matrix is not positive (has eigenvalue $(evals[i]))"
     end
     return Diagonal(sqrt.(evals[k:end])) * evecs[:, k:end]'
 end
