@@ -17,12 +17,12 @@ const CHOL_SPLIT_TOL = 1.0e-12
 Preparing an infinite symmetric mps into (right-)canonical form
 Reference: PHYSICAL REVIEW B 78, 155117 
 """
-function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, TruncationDimCutoff} = Orthogonalize(TK.SVD(), DefaultTruncation, normalize=true), tolchoi::Real=CHOL_SPLIT_TOL)
+function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, TruncationDimCutoff} = Orthogonalize(TK.SVD(), DefaultTruncation, normalize=true), tolchol::Real=CHOL_SPLIT_TOL)
 	alg.normalize || throw(ArgumentError("normalization has been doen for infinite mps"))
 	eta, Vl, Vr = leading_boundaries(x, x)
 	# println("eta is ", eta)
-	Y = chol_split(Vl, tolchoi)
-	X = chol_split(Vr, tolchoi)'
+	Y = chol_split(Vl, tolchol)
+	X = chol_split(Vr, tolchol)'
 	U, S, V = tsvd!(Y * x.s[1] * X)
 
 	alg.normalize && normalize!(S)
