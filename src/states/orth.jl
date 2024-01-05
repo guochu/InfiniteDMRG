@@ -2,11 +2,12 @@ function leading_boundaries(x::M, y::M) where {M <: AbstractInfiniteTN}
 	Adata, Bdata = get_common_data(x, y)
 	cell = TransferMatrix(Adata, Bdata)
 	vl, vr = random_boundaries(cell)
-	left_eigenvalues, left_eigenvectors, info = eigsolve(x -> transfer_left(x, cell), vl, 1, :LM, Arnoldi())
+	which = :LR
+	left_eigenvalues, left_eigenvectors, info = eigsolve(x -> transfer_left(x, cell), vl, 1, which, Arnoldi())
 	left_eigenvalue = left_eigenvalues[1]
 	left_eigenvector = left_eigenvectors[1]
 	(info.converged >= 1) || error("left dominate eigendecomposition fails to converge")
-	right_eigenvalues, right_eigenvectors, info = eigsolve(x -> transfer_right(x, cell), vr, 1, :LM, Arnoldi())
+	right_eigenvalues, right_eigenvectors, info = eigsolve(x -> transfer_right(x, cell), vr, 1, which, Arnoldi())
 	right_eigenvalue = right_eigenvalues[1]
 	right_eigenvector = right_eigenvectors[1]
 	(info.converged >= 1) || error("right dominate eigendecomposition fails to converge")
