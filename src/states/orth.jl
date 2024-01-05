@@ -6,7 +6,8 @@ function leading_boundaries(x::M, y::M) where {M <: AbstractInfiniteTN}
 	(info.converged >= 1) || error("left dominate eigendecomposition fails to converge")
 	right_eigenvalue, right_eigenvector, info = eigsolve(x -> transfer_right(x, cell), vr, 1, :LM, Arnoldi())
 	(info.converged >= 1) || error("right dominate eigendecomposition fails to converge")
-	(left_eigenvalue[1] ≈ right_eigenvalue[1]) || throw(ArgumentError("left and right dominate eigenvalue mismatch"))
+	(left_eigenvalue[1] ≈ right_eigenvalue[1]) || throw(ArgumentError(
+		"left and right dominate eigenvalue mismatch with relative error $(abs(left_eigenvalue[1]-right_eigenvalue[1])/abs(left_eigenvalue[1]))"))
 	return left_eigenvalue[1], normalize_trace!(left_eigenvector[1]), normalize_trace!(right_eigenvector[1])
 end
 
