@@ -2,7 +2,7 @@ function leading_boundaries(x::M, y::M) where {M <: AbstractInfiniteTN}
 	Adata, Bdata = get_common_data(x, y)
 	cell = TransferMatrix(Adata, Bdata)
 	vl, vr = random_boundaries(cell)
-	which = :LR
+	which = :LM
 	left_eigenvalues, left_eigenvectors, info = eigsolve(x -> transfer_left(x, cell), vl, 1, which, Arnoldi())
 	left_eigenvalue = left_eigenvalues[1]
 	left_eigenvector = left_eigenvectors[1]
@@ -69,7 +69,7 @@ function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     	end
     	# positive check
         # println("$(evals[i])--------------------")
-        (abs(evals[i]) < tol) || @warn "input matrix is not positive (has eigenvalue $(evals[i]))"
+        (abs(evals[i]) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (has eigenvalue $(evals[i]))"
     end
     return Diagonal(sqrt.(evals[k:end])) * evecs[:, k:end]'
 end
