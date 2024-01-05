@@ -49,7 +49,7 @@ function normalize_trace!(x::TensorMap)
 	return lmul!(1 / tr(x), x)
 end
 
-const CHOL_SPLIT_TOL = 1.0e-12
+const CHOL_SPLIT_TOL = 1.0e-14
 
 function chol_split(m::AbstractMatrix{<:Number})
     # println("m is hermitian? $(maximum(abs.(m - m'))).")
