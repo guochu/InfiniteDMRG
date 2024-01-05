@@ -29,7 +29,7 @@ function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, Truncatio
 	L = unitcell_size(x)
 	for i in 1:(L-1)
 		@tensor xj[1,3; 4] := m[1, 2] * x[i][2,3,4]
-		x[i], m = leftorth!(xj, alg=TK.QR())
+		x[i], m = leftorth!(xj, alg=TK.QRpos())
 	end
 	x[L] = @tensor tmp[1,3; 5] := m[1, 2] * x[L][2,3,4] * inv(x.s[L+1])[4,5]
 	m = Y \ (U * S)
