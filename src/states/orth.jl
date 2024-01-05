@@ -10,18 +10,19 @@ function leading_boundaries(x::M, y::M) where {M <: AbstractInfiniteTN}
 	return left_eigenvalue[1], normalize_trace!(left_eigenvector[1]), normalize_trace!(right_eigenvector[1])
 end
 
+const CHOL_SPLIT_TOL = 1.0e-12
 
 """
 	canonicalize!(x::InfiniteMPS; alg::Orthogonalize)
 Preparing an infinite symmetric mps into (right-)canonical form
 Reference: PHYSICAL REVIEW B 78, 155117 
 """
-function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, TruncationDimCutoff} = Orthogonalize(TK.SVD(), DefaultTruncation, normalize=true))
+function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, TruncationDimCutoff} = Orthogonalize(TK.SVD(), DefaultTruncation, normalize=true), tolchoi::Real=CHOL_SPLIT_TOL)
 	alg.normalize || throw(ArgumentError("normalization has been doen for infinite mps"))
 	eta, Vl, Vr = leading_boundaries(x, x)
 	# println("eta is ", eta)
-	Y = chol_split(Vl)
-	X = chol_split(Vr)'
+	Y = chol_split(Vl, tolchoi)
+	X = chol_split(Vr, tolchoi)'
 	U, S, V = tsvd!(Y * x.s[1] * X)
 
 	alg.normalize && normalize!(S)
@@ -50,30 +51,29 @@ function normalize_trace!(x::TensorMap)
 	return lmul!(1 / tr(x), x)
 end
 
-const CHOL_SPLIT_TOL = 1.0e-12
 
-function chol_split(m::AbstractMatrix{<:Number})
+function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     # println("m is hermitian? $(maximum(abs.(m - m'))).")
     evals, evecs = eigen(Hermitian(m))
     # println("eigenvalues ", evals)
     k = length(evals)+1
     for i in 1:length(evals)
-    	if evals[i] > CHOL_SPLIT_TOL
+    	if evals[i] > tol
     		k = i
     		break
     	end
     	# positive check
         # println("$(evals[i])--------------------")
-        (abs(evals[i]) < CHOL_SPLIT_TOL) || error("input matrix is not positive (has eigenvalue $(evals[i]))")
+        (abs(evals[i]) < tol) || error("input matrix is not positive (has eigenvalue $(evals[i]))")
     end
     return Diagonal(sqrt.(evals[k:end])) * evecs[:, k:end]'
 end
 
-function chol_split(m::MPSBondTensor{S}) where {S}
+function chol_split(m::MPSBondTensor{S}, tol::Real) where {S}
     r = empty(m.data)
     dims = TK.SectorDict{sectortype(S), Int}()
     for (c, b) in blocks(m)
-    	b2 = chol_split(b)
+    	b2 = chol_split(b, tol)
     	if !isempty(b2)
     		# println(c, " ", size(b2))
     		r[c] = b2
