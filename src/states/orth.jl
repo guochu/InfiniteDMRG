@@ -16,7 +16,8 @@ end
 Preparing an infinite symmetric mps into (right-)canonical form
 Reference: PHYSICAL REVIEW B 78, 155117 
 """
-function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize = Orthogonalize(TK.SVD(), DefaultTruncation, normalize=true))
+function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, TruncationDimCutoff} = Orthogonalize(TK.SVD(), DefaultTruncation, normalize=true))
+	alg.normalize || throw(ArgumentError("normalization has been doen for infinite mps"))
 	eta, Vl, Vr = leading_boundaries(x, x)
 	# println("eta is ", eta)
 	Y = chol_split(Vl)
