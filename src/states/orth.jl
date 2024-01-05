@@ -49,7 +49,7 @@ function normalize_trace!(x::TensorMap)
 	return lmul!(1 / tr(x), x)
 end
 
-const CHOL_SPLIT_TOL = 1.0e-14
+const CHOL_SPLIT_TOL = 1.0e-12
 
 function chol_split(m::AbstractMatrix{<:Number})
     # println("m is hermitian? $(maximum(abs.(m - m'))).")
@@ -63,7 +63,7 @@ function chol_split(m::AbstractMatrix{<:Number})
     	end
     	# positive check
         # println("$(evals[i])--------------------")
-        (abs(evals[i]) < CHOL_SPLIT_TOL) || error("input matrix is not positive")
+        (abs(evals[i]) < CHOL_SPLIT_TOL) || error("input matrix is not positive (has eigenvalue $(evals[i]))")
     end
     return Diagonal(sqrt.(evals[k:end])) * evecs[:, k:end]'
 end
