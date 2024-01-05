@@ -2,13 +2,17 @@ function leading_boundaries(x::M, y::M) where {M <: AbstractInfiniteTN}
 	Adata, Bdata = get_common_data(x, y)
 	cell = TransferMatrix(Adata, Bdata)
 	vl, vr = random_boundaries(cell)
-	left_eigenvalue, left_eigenvector, info = eigsolve(x -> transfer_left(x, cell), vl, 1, :LM, Arnoldi())
+	left_eigenvalues, left_eigenvectors, info = eigsolve(x -> transfer_left(x, cell), vl, 1, :LM, Arnoldi())
+	left_eigenvalue = left_eigenvalues[1]
+	left_eigenvector = left_eigenvectors[1]
 	(info.converged >= 1) || error("left dominate eigendecomposition fails to converge")
-	right_eigenvalue, right_eigenvector, info = eigsolve(x -> transfer_right(x, cell), vr, 1, :LM, Arnoldi())
+	right_eigenvalues, right_eigenvectors, info = eigsolve(x -> transfer_right(x, cell), vr, 1, :LM, Arnoldi())
+	right_eigenvalue = right_eigenvalues[1]
+	right_eigenvector = right_eigenvectors[1]
 	(info.converged >= 1) || error("right dominate eigendecomposition fails to converge")
-	(left_eigenvalue[1] ≈ right_eigenvalue[1]) || throw(ArgumentError(
-		"left and right dominate eigenvalue mismatch with relative error $(abs(left_eigenvalue[1]-right_eigenvalue[1])/abs(left_eigenvalue[1]))"))
-	return left_eigenvalue[1], normalize_trace!(left_eigenvector[1]), normalize_trace!(right_eigenvector[1])
+	(left_eigenvalue ≈ right_eigenvalue) || throw(ArgumentError(
+		"left and right dominate eigenvalues $(left_eigenvalue) and $(right_eigenvalue) mismatch"))
+	return left_eigenvalue, normalize_trace!(left_eigenvector), normalize_trace!(right_eigenvector)
 end
 
 const CHOL_SPLIT_TOL = 1.0e-12
