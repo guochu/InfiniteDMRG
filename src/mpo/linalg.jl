@@ -34,6 +34,18 @@ function Base.:*(h::InfiniteMPO, psi::InfiniteMPS)
     return InfiniteMPS(mpstensors)
 end
 
+Base.:*(h::MPO, psi::InfiniteMPS) = convert(InfiniteMPO, h) * psi
+
+function Base.:*(ob::PartialMPO, psi::InfiniteMPS)
+    start, stop = positions(ob)[1], positions(ob)[end]
+    L = length(psi)
+    _start = r_start(start, L)
+    _stop = r_stop(stop, L)
+    physpaces = [physical_space(psi, i) for i in _start:_stop]
+    mpo = prodmpo(physpaces, positions(ob) .- (_start-1), ob.data)
+    return mpo * psi
+end
+
 function Base.:*(a::InfiniteMPO, b::InfiniteMPO) 
 	Adata, Bdata = get_common_data(a, b)
 	cellsize = length(Adata)
@@ -47,4 +59,12 @@ function Base.:*(a::InfiniteMPO, b::InfiniteMPO)
     end   
     
     return InfiniteMPO(mpotensors)
+end
+
+function r_start(x, L)
+    return ifelse(x > 0, div(x-1, L) * L + 1, div(x-L, L) * L + 1)
+end
+
+function r_stop(x, L)
+    return ifelse(x > 0, div(x-1, L) * L + L, div(x-L, L) * L + L)
 end

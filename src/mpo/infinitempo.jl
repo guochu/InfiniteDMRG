@@ -30,3 +30,5 @@ function check_mpo_spaces(mpotensors::PeriodicArray)
 		(space_r(mpotensors[i]) == space_l(mpotensors[i+1])') || throw(SpaceMismatch())
 	end
 end
+
+Base.convert(::Type{<:InfiniteMPO}, h::MPO) = InfiniteMPO(h.data)
