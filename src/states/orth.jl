@@ -28,9 +28,9 @@ function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, Truncatio
 	# println("eta is ", eta)
 	Y = chol_split(Vl, tolchol)
 	X = chol_split(Vr, tolchol)'
-	U, S, V = tsvd!(Y * x.s[1] * X)
-
+	U, S, V = tsvd!(Y * x.s[1] * X, trunc=alg.trunc)
 	alg.normalize && normalize!(S)
+	
 	m = (S * V) / X
 	L = unitcell_size(x)
 	for i in 1:(L-1)

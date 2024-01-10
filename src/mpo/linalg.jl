@@ -36,6 +36,7 @@ end
 
 Base.:*(h::MPO, psi::InfiniteMPS) = convert(InfiniteMPO, h) * psi
 
+# PartialMPO applied on a window of infiniteMPS
 function Base.:*(ob::PartialMPO, psi::InfiniteMPS)
     start, stop = positions(ob)[1], positions(ob)[end]
     L = length(psi)
