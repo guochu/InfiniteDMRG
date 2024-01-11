@@ -88,7 +88,7 @@ function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     	end
     end
     # positivity check
-    (maximum(abs, view(evals, 1:k-1), init=0.) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (with eigenvalue $(evals[1:k-1]))"
+    (maximum(abs, view(evals, 1:k-1), init=0.) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (with eigenvalue $(maximum(abs, view(evals, 1:k-1), init=0.)))"
     return Diagonal(sqrt.(evals[k:end])) * evecs[:, k:end]'
 end
 
