@@ -61,7 +61,7 @@ quantum numbers to be explored under bond dimension D
 function randomimps(::Type{T}, physpaces::AbstractVector{S}; D::Int, right::S=oneunit(S)) where {T <: Number, S <: ElementarySpace}
 	virtualpaces = DMRG._max_mps_virtual_spaces(physpaces, D, right, right)
 	r = InfiniteMPS(randn, T, physpaces, virtualpaces[1:length(physpaces)])
-	canonicalize!(r, alg=Orthogonalize(TK.SVD(), trunc, normalize=true))
+	canonicalize!(r)
 	return r
 end
 randomimps(physpaces::AbstractVector{S}; kwargs...) where {S <: ElementarySpace} = randomimps(Float64, physpaces; kwargs...)

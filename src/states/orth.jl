@@ -1,16 +1,28 @@
 function leading_boundaries(tn::InfiniteMPS) 
 	Adata, Bdata = get_common_data(tn, tn)
 	cell = TransferMatrix(Adata, Bdata)
+	# if dim(space_l(tn)) >= 20
 	vl, vr = random_boundaries(cell)
 	left_eigenvalue, left_eigenvector = _eigsolve(x -> transfer_left(x, cell), vl * vl')
 	right_eigenvalue, right_eigenvector = _eigsolve(x -> transfer_right(x, cell), vr * vr')
+	# else
+	# 	m = convert(TensorMap, cell)
+	# 	left_eigenvalues, left_eigenvectors = eig!(permute(m, (3,4), (1,2)))
+	# 	println(left_eigenvalues)
+	# 	right_eigenvalues, right_eigenvectors = eig!(m)
+	# 	println(right_eigenvalues)
+	# 	left_eigenvalue = left_eigenvalues[1]
+	# 	right_eigenvalue = right_eigenvalues[1]
+	# 	left_eigenvector = permute(left_eigenvectors[1], (1,), (2,))
+	# 	right_eigenvector = permute(right_eigenvectors[1], (2,), (1,))
+	# end
 	(left_eigenvalue ≈ right_eigenvalue) || @warn "left and right dominate eigenvalues $(left_eigenvalue) and $(right_eigenvalue) mismatch"
 	return left_eigenvalue, left_eigenvector, right_eigenvector
 end
 
 
 function _eigsolve(f, v0)
-	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi(krylovdim=30))
+	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi(krylovdim=30, eager=true, maxiter=500))
 	(info.converged >= 1) || error("dominate eigendecomposition fails to converge")
 	eigenvalue = eigenvalues[1]
 	eigenvector = normalize_trace!(eigenvectors[1])
