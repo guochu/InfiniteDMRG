@@ -68,6 +68,7 @@ function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     # println("m is hermitian? $(maximum(abs.(m - m'))).")
     evals, evecs = eigen(Hermitian(m))
     # println("eigenvalues ", evals)
+    (maximum(abs, evals) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (with eigenvalue $(evals))"
     k = length(evals)+1
     for i in 1:length(evals)
     	if evals[i] > tol
@@ -77,7 +78,6 @@ function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     	# positive check
         # println("$(evals[i])--------------------")
     end
-    (maximum(abs, evals) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (with eigenvalue $(evals))"
     return Diagonal(sqrt.(evals[k:end])) * evecs[:, k:end]'
 end
 
