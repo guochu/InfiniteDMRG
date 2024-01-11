@@ -1,5 +1,12 @@
 
 
+function TK.lmul!(f::Number, h::InfiniteMPO)
+    h[1] *= f
+    return h
+end
+Base.:*(h::InfiniteMPO, f::Number) = lmul!(f, copy(h))
+Base.:*(f::Number, h::InfiniteMPO) = h * f
+
 """
     Base.:+(hA::InfiniteMPO, hB::InfiniteMPO) 
     addition of two MPOs

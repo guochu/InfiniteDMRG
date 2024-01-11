@@ -69,7 +69,7 @@ function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     	end
     	# positive check
         # println("$(evals[i])--------------------")
-        (abs(evals[i]) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (has eigenvalue $(evals[i]))"
+        (abs(evals[i]) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (with eigenvalue $(evals[i]))"
     end
     return Diagonal(sqrt.(evals[k:end])) * evecs[:, k:end]'
 end
