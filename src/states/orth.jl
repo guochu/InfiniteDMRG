@@ -2,17 +2,24 @@ function leading_boundaries(x::M, y::M) where {M <: AbstractInfiniteTN}
 	Adata, Bdata = get_common_data(x, y)
 	cell = TransferMatrix(Adata, Bdata)
 	vl, vr = random_boundaries(cell)
-	which = :LM
-	left_eigenvalues, left_eigenvectors, info = eigsolve(x -> transfer_left(x, cell), vl, 1, which, Arnoldi())
-	left_eigenvalue = left_eigenvalues[1]
-	left_eigenvector = left_eigenvectors[1]
-	(info.converged >= 1) || error("left dominate eigendecomposition fails to converge")
-	right_eigenvalues, right_eigenvectors, info = eigsolve(x -> transfer_right(x, cell), vr, 1, which, Arnoldi())
-	right_eigenvalue = right_eigenvalues[1]
-	right_eigenvector = right_eigenvectors[1]
-	(info.converged >= 1) || error("right dominate eigendecomposition fails to converge")
+	left_eigenvalue, left_eigenvector = _eigsolve(x -> transfer_left(x, cell), vl)
+	right_eigenvalue, right_eigenvector = _eigsolve(x -> transfer_right(x, cell), vr)
 	(left_eigenvalue ≈ right_eigenvalue) || @warn "left and right dominate eigenvalues $(left_eigenvalue) and $(right_eigenvalue) mismatch"
-	return left_eigenvalue, normalize_trace!(left_eigenvector), normalize_trace!(right_eigenvector)
+	return left_eigenvalue, left_eigenvector, right_eigenvector
+end
+
+
+function _eigsolve(f, v0)
+	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi())
+	(info.converged >= 1) || error("dominate eigendecomposition fails to converge")
+	eigenvalue = eigenvalues[1]
+	eigenvector = normalize_trace!(eigenvectors[1])
+	if (scalartype(v0) <: Real) && (scalartype(eigenvector) <: Complex)
+		(norm(imag(eigenvector)) < 1.0e-8 ) || @warn "norm of imaginary part of eigenvector is $(norm(imag(eigenvector)))"
+		(abs(imag(eigenvalue)) < 1.0e-12) || @warn "imaginary part of eigenvalue is $(imag(eigenvalue))"
+		return real(eigenvalue), real(eigenvector)
+	end
+	return eigenvalue, eigenvector
 end
 
 const CHOL_SPLIT_TOL = 1.0e-12
@@ -69,8 +76,8 @@ function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     	end
     	# positive check
         # println("$(evals[i])--------------------")
-        (abs(evals[i]) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (with eigenvalue $(evals[i]))"
     end
+    (maximum(abs, evals) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (with eigenvalue $(evals))"
     return Diagonal(sqrt.(evals[k:end])) * evecs[:, k:end]'
 end
 
