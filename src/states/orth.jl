@@ -1,10 +1,14 @@
 function leading_boundaries(tn::InfiniteMPS) 
-	Adata, Bdata = get_common_data(tn, tn)
-	cell = TransferMatrix(Adata, Bdata)
+	Adata = [tn[i] for i in 1:unitcell_size(tn)]
+	cell = TransferMatrix(Adata)
 	# if dim(space_l(tn)) >= 20
 	vl, vr = random_boundaries(cell)
-	left_eigenvalue, left_eigenvector = _eigsolve(x -> transfer_left(x, cell), vl * vl')
-	right_eigenvalue, right_eigenvector = _eigsolve(x -> transfer_right(x, cell), vr * vr')
+	right_eigenvalue, right_eigenvector = _eigsolve(x -> transfer_right(x, cell), vr)
+	S = tn.s[1]
+	invS = inv(S)
+	Adata[end] = @tensor tmp[2,3;5] := Adata[end][2,3,4] * invS[4,5]
+	Adata[1] = @tensor tmp[1,3;4] := S[1,2] * Adata[1][2,3,4] 
+	left_eigenvalue, left_eigenvector = _eigsolve(x -> transfer_left(x, cell), vl)
 	# else
 	# 	m = convert(TensorMap, cell)
 	# 	left_eigenvalues, left_eigenvectors = eig!(permute(m, (3,4), (1,2)))

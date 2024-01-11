@@ -31,7 +31,12 @@ println("------------------------------------")
 
 	# random mps, trivial sector
 	VSU2 = Rep[U₁×SU₂]((-0.5, 0)=>1, (0.5, 0)=>1, (0, 0.5)=>1)
-	psi = randomimps(ComplexF64, [VSU2 for i in 1:4], D=4)
-	@constinferred canonicalize!(psi)
+	vspace = Rep[U₁×SU₂]((0, 0)=>4, (0, 1)=>4, (0, 0.5)=>4)
+	for T in (Float64, ComplexF64)
+		psi = InfiniteMPS(randn, T, [VSU2 for i in 1:4], [vspace for i in 1:4])
+		canonicalize!(psi)
+		@test isrightcanonical(psi)
+		@test iscanonical(psi)
+	end
 
 end

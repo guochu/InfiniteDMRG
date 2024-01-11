@@ -60,6 +60,21 @@ function Base.convert(::Type{<:InfiniteMPS}, psi::MPS)
 	end
 end
 
+DMRG.isrightcanonical(a::InfiniteMPS; kwargs...) = all(x->isrightcanonical(x; kwargs...), a.data)
+DMRG.isleftcanonical(a::InfiniteMPS; kwargs...) = all(x->isleftcanonical(x; kwargs...), a.data)
+function iscanonical(a::InfiniteMPS; kwargs...)
+	isrightcanonical(a) || return false
+	S = a.s[1]
+	hold = S' * l_LL(a, a) * S
+	for i in 1:length(a)-1
+		hold = updateleft(hold, a[i], a[i])
+		tmp = a.s[i+1] * a.s[i+1]
+		isapprox(hold, tmp; kwargs...) || return false
+	end
+	return true	
+end
+
+
 function check_mps_spaces(data::PeriodicArray)
 	@assert !isempty(data)
 	for i in 1:length(data)

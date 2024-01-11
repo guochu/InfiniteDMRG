@@ -16,3 +16,6 @@ DMRG.physical_spaces(m::AbstractInfiniteTN) = [physical_space(m, i) for i in 1:l
 virtual_space(m::AbstractInfiniteTN, i::Int) = space_l(m[i])
 virtual_spaces(m::AbstractInfiniteTN) = [virtual_space(m, i) for i in 1:length(m)]
 
+DMRG.r_RR(a::AbstractInfiniteTN, b::AbstractInfiniteTN) = DMRG.loose_isometry(Matrix{promote_type(scalartype(a), scalartype(b))}, space_r(b)', space_r(a)')
+DMRG.l_LL(a::AbstractInfiniteTN, b::AbstractInfiniteTN) = DMRG.loose_isometry(Matrix{promote_type(scalartype(a), scalartype(b))}, space_l(a), space_l(b))
+
