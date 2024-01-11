@@ -8,3 +8,4 @@ using Test
 using TestExtras
 
 include("states.jl")
+include("mpo.jl")

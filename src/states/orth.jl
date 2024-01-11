@@ -22,7 +22,7 @@ end
 
 
 function _eigsolve(f, v0)
-	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi(krylovdim=30, eager=true, maxiter=500))
+	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi(krylovdim=30, eager=true, maxiter=Defaults.maxiter))
 	(info.converged >= 1) || error("dominate eigendecomposition fails to converge")
 	eigenvalue = eigenvalues[1]
 	eigenvector = normalize_trace!(eigenvectors[1])

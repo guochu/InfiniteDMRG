@@ -16,7 +16,12 @@ function Base.:+(psiA::InfiniteMPS, psiB::InfiniteMPS)
         @tensor m1[-1 -2; -3] += (embedders[i-1][2])'[-1, 1] * psiB[i][1,-2,2] * embedders[i][2][2, -3]
         r[i] = m1
     end
-    return InfiniteMPS(r)
+    # the first singular vector must be handled!!!
+    i = 1
+    @tensor sl[-1; -2] := (embedders[i-1][1])'[-1, 1] * psiA.s[i][1,2] * embedders[i-1][1][2, -2]
+    @tensor sl[-1; -2] += (embedders[i-1][2])'[-1, 1] * psiB.s[i][1,2] * embedders[i-1][2][2, -2]
+    (norm(imag(sl)) <= 1.0e-8) || @warn "norm of imaginary part of singular vector is $(norm(imag(sl)))"
+    return InfiniteMPS(r, real(sl))
 end
 
 
