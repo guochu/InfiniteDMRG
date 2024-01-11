@@ -10,7 +10,7 @@ end
 
 
 function _eigsolve(f, v0)
-	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi())
+	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi(krylovdim=30))
 	(info.converged >= 1) || error("dominate eigendecomposition fails to converge")
 	eigenvalue = eigenvalues[1]
 	eigenvector = normalize_trace!(eigenvectors[1])
