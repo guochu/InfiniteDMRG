@@ -1,9 +1,9 @@
-function leading_boundaries(x::M, y::M) where {M <: AbstractInfiniteTN}
-	Adata, Bdata = get_common_data(x, y)
+function leading_boundaries(tn::InfiniteMPS) 
+	Adata, Bdata = get_common_data(tn, tn)
 	cell = TransferMatrix(Adata, Bdata)
 	vl, vr = random_boundaries(cell)
-	left_eigenvalue, left_eigenvector = _eigsolve(x -> transfer_left(x, cell), vl)
-	right_eigenvalue, right_eigenvector = _eigsolve(x -> transfer_right(x, cell), vr)
+	left_eigenvalue, left_eigenvector = _eigsolve(x -> transfer_left(x, cell), vl * vl')
+	right_eigenvalue, right_eigenvector = _eigsolve(x -> transfer_right(x, cell), vr * vr')
 	(left_eigenvalue ≈ right_eigenvalue) || @warn "left and right dominate eigenvalues $(left_eigenvalue) and $(right_eigenvalue) mismatch"
 	return left_eigenvalue, left_eigenvector, right_eigenvector
 end
@@ -31,7 +31,7 @@ Reference: PHYSICAL REVIEW B 78, 155117
 """
 function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, TruncationDimCutoff} = Orthogonalize(TK.SVD(), DefaultTruncation, normalize=true), tolchol::Real=CHOL_SPLIT_TOL)
 	alg.normalize || throw(ArgumentError("normalization has been doen for infinite mps"))
-	eta, Vl, Vr = leading_boundaries(x, x)
+	eta, Vl, Vr = leading_boundaries(x)
 	# println("eta is ", eta)
 	Y = chol_split(Vl, tolchol)
 	X = chol_split(Vr, tolchol)'
