@@ -14,13 +14,12 @@ function InfiniteMPS(data::PeriodicArray{A, 1}, svectors::PeriodicArray{B, 1}) w
 	return new{A, B}(data, svectors)
 end
 
-function InfiniteMPS(data::PeriodicArray{A, 1}, sl::MPSBondTensor) where {A<:MPSTensor}
+function InfiniteMPS(data::PeriodicArray{A, 1}) where {A<:MPSTensor}
 	check_mps_spaces(data)	
 	T = real(scalartype(A))
 	B = bondtensortype(spacetype(A), Diagonal{T, Vector{T}})
 	svectors = PeriodicArray{B, 1}(undef, length(data))
-	svectors[1] = convert(B, sl) 
-	for i in 2:length(data)
+	for i in 1:length(data)
 		svectors[i] = convert(B, id(space_l(data[i])))
 	end
 	return new{A, B}(data, svectors)
@@ -29,14 +28,7 @@ end
 end
 
 InfiniteMPS(data::AbstractVector{<:MPSTensor}, svectors::AbstractVector{<:MPSBondTensor}) = InfiniteMPS(PeriodicArray(data), PeriodicArray(svectors))
-InfiniteMPS(data::AbstractVector{<:MPSTensor}, sl::MPSBondTensor) = InfiniteMPS(PeriodicArray(data), sl)
-
-function InfiniteMPS(data::AbstractVector{A}) where {A <: MPSTensor}
-	T = real(scalartype(A))
-	B = bondtensortype(spacetype(A), Diagonal{T, Vector{T}})
-	sl = convert(B, id(space_l(data[1])))
-	return 	InfiniteMPS(data, sl)
-end
+InfiniteMPS(data::AbstractVector{<:MPSTensor}) = InfiniteMPS(PeriodicArray(data))
 
 function Base.getproperty(psi::InfiniteMPS, s::Symbol)
 	if s == :s

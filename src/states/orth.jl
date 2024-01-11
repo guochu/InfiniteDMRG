@@ -1,14 +1,10 @@
 function leading_boundaries(tn::InfiniteMPS) 
 	Adata = [tn[i] for i in 1:unitcell_size(tn)]
-	cell = TransferMatrix(Adata)
+	cell = TransferMatrix(Adata, Adata)
 	# if dim(space_l(tn)) >= 20
 	vl, vr = random_boundaries(cell)
-	right_eigenvalue, right_eigenvector = _eigsolve(x -> transfer_right(x, cell), vr)
-	S = tn.s[1]
-	invS = inv(S)
-	Adata[end] = @tensor tmp[2,3;5] := Adata[end][2,3,4] * invS[4,5]
-	Adata[1] = @tensor tmp[1,3;4] := S[1,2] * Adata[1][2,3,4] 
-	left_eigenvalue, left_eigenvector = _eigsolve(x -> transfer_left(x, cell), vl)
+	left_eigenvalue, left_eigenvector = _eigsolve(x -> transfer_left(x, cell), vl * vl')
+	right_eigenvalue, right_eigenvector = _eigsolve(x -> transfer_right(x, cell), vr * vr')
 	# else
 	# 	m = convert(TensorMap, cell)
 	# 	left_eigenvalues, left_eigenvectors = eig!(permute(m, (3,4), (1,2)))
@@ -26,7 +22,7 @@ end
 
 
 function _eigsolve(f, v0)
-	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi(krylovdim=30, eager=true, maxiter=Defaults.maxiter))
+	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi(krylovdim=30, maxiter=Defaults.maxiter))
 	(info.converged >= 1) || error("dominate eigendecomposition fails to converge")
 	eigenvalue = eigenvalues[1]
 	eigenvector = normalize_trace!(eigenvectors[1])
@@ -51,7 +47,7 @@ function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, Truncatio
 	# println("eta is ", eta)
 	Y = chol_split(Vl, tolchol)
 	X = chol_split(Vr, tolchol)'
-	U, S, V = tsvd!(Y * x.s[1] * X, trunc=alg.trunc)
+	U, S, V = tsvd!(Y * X, trunc=alg.trunc)
 	alg.normalize && normalize!(S)
 	
 	m = (S * V) / X
@@ -60,17 +56,19 @@ function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, Truncatio
 		@tensor xj[1,3; 4] := m[1, 2] * x[i][2,3,4]
 		x[i], m = leftorth!(xj, alg=TK.QRpos())
 	end
-	x[L] = @tensor tmp[1,3; 5] := m[1, 2] * x[L][2,3,4] * inv(x.s[L+1])[4,5]
-	m = Y \ (U * S)
+	m2 = Y \ (U * S)
+	x[L] = @tensor tmp[1,3; 5] := m[1,2] * x[L][2,3,4] * m2[4,5]
+	
 	for i in L:-1:2
-		@tensor xj[1; 2 4] := x[i][1,2,3] * m[3,4]
-		v, ss, xj2, err = tsvd!(xj, trunc=alg.trunc)
+		# @tensor xj[1; 2 4] := x[i][1,2,3] * m[3,4]
+		v, ss, xj2, err = tsvd(x[i], (1,), (2,3), trunc=alg.trunc)
 		x[i] = permute(xj2, (1,2), (3,))
 		alg.normalize && (normalize!(ss))
 		x.s[i] = ss
 		m = v * ss
+		x[i-1] = @tensor tmp[1,2;4] := x[i-1][1,2,3] * m[3,4]
 	end
-	x[1] = @tensor tmp[1,3; 5] := inv(S)[1,2] * x[1][2,3,4] * m[4,5]
+	x[1] = @tensor tmp[1,3; 4] := inv(S)[1,2] * x[1][2,3,4] 
 	x.s[1] = S
 	return x
 end

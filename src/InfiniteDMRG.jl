@@ -19,9 +19,10 @@ using DMRG: svectors_uninitialized, updateright, updateleft
 
 const DefaultTruncation = TruncationDimCutoff(D=Defaults.D, ϵ=1.0e-12, add_back=0)
 
+# transfer matrix
+include("transfer.jl")
 
 # infinite MPS
-include("states/transfer.jl")
 include("states/abstracttn.jl")
 include("states/bondview.jl")
 include("states/infinitemps.jl")

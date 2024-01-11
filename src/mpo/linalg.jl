@@ -38,12 +38,7 @@ function Base.:*(h::InfiniteMPO, psi::InfiniteMPS)
         @tensor tmp[-1 -2; -3] := conj(fusion_ts[i-1][1,2,-1]) * r[i][1,2,-2,3,4] * fusion_ts[i][3,4,-3]
         mpstensors[i] = tmp
     end
-    vspace = space_l(h)
-    vd2 = id(vspace)
-    i = 1
-    @tensor sl[-1; -3] := conj(fusion_ts[i-1][1,2,-1]) * vd2[1,3] * psi.s[1][2,4] * fusion_ts[i-1][3,4,-3]
-    (norm(imag(sl)) <= 1.0e-8) || @warn "norm of imaginary part of singular vector is $(norm(imag(sl)))"
-    return InfiniteMPS(mpstensors, real(sl))
+    return InfiniteMPS(mpstensors)
 end
 
 Base.:*(h::MPO, psi::InfiniteMPS) = convert(InfiniteMPO, h) * psi
