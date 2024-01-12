@@ -32,9 +32,10 @@ println("------------------------------------")
 	# random mps, trivial sector
 	VSU2 = Rep[U₁×SU₂]((-0.5, 0)=>1, (0.5, 0)=>1, (0, 0.5)=>1)
 	vspace = Rep[U₁×SU₂]((0, 0)=>4, (0, 1)=>4, (0, 0.5)=>4)
+	orth = Orthogonalize(trunc=truncdimcutoff(D=200, ϵ=1.0e-8, add_back=0), normalize=true)
 	for T in (Float64, ComplexF64)
 		psi = InfiniteMPS(randn, T, [VSU2 for i in 1:4], [vspace for i in 1:4])
-		canonicalize!(psi)
+		canonicalize!(psi, alg=orth)
 		@test isrightcanonical(psi)
 		@test iscanonical(psi)
 	end

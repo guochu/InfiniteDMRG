@@ -1,10 +1,16 @@
+function TransferMatrix(a::InfiniteMPS, b::InfiniteMPS)
+	Adata, Bdata = get_common_data(a, b)
+	return TransferMatrix(Adata, Bdata)
+end
+TransferMatrix(a::InfiniteMPS) = TransferMatrix(a, a)
+
 function leading_boundaries(tn::InfiniteMPS) 
-	Adata = [tn[i] for i in 1:unitcell_size(tn)]
-	cell = TransferMatrix(Adata, Adata)
+	# Adata = [tn[i] for i in 1:unitcell_size(tn)]
+	cell = TransferMatrix(tn)
 	# if dim(space_l(tn)) >= 20
 	vl, vr = random_boundaries(cell)
-	left_eigenvalue, left_eigenvector = _eigsolve(x -> transfer_left(x, cell), vl * vl')
-	right_eigenvalue, right_eigenvector = _eigsolve(x -> transfer_right(x, cell), vr * vr')
+	left_eigenvalue, left_eigenvector = _eigsolve_pos(x -> transfer_left(x, cell), vl * vl')
+	right_eigenvalue, right_eigenvector = _eigsolve_pos(x -> transfer_right(x, cell), vr * vr')
 	# else
 	# 	m = convert(TensorMap, cell)
 	# 	left_eigenvalues, left_eigenvectors = eig!(permute(m, (3,4), (1,2)))
@@ -20,12 +26,17 @@ function leading_boundaries(tn::InfiniteMPS)
 	return left_eigenvalue, left_eigenvector, right_eigenvector
 end
 
-
 function _eigsolve(f, v0)
 	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi(krylovdim=30, maxiter=Defaults.maxiter))
 	(info.converged >= 1) || error("dominate eigendecomposition fails to converge")
 	eigenvalue = eigenvalues[1]
-	eigenvector = normalize_trace!(eigenvectors[1])
+	eigenvector = eigenvectors[1]
+	return eigenvalue, eigenvector
+end
+
+function _eigsolve_pos(f, v0)
+	eigenvalue, eigenvector = _eigsolve(f, v0)
+	eigenvector = normalize_trace!(eigenvector)
 	if (scalartype(v0) <: Real) && (scalartype(eigenvector) <: Complex)
 		(norm(imag(eigenvector)) < 1.0e-8 ) || @warn "norm of imaginary part of eigenvector is $(norm(imag(eigenvector)))"
 		(abs(imag(eigenvalue)) < 1.0e-12) || @warn "imaginary part of eigenvalue is $(imag(eigenvalue))"
@@ -36,15 +47,20 @@ end
 
 const CHOL_SPLIT_TOL = 1.0e-12
 
+function approximate!(y::InfiniteMPS, x::InfiniteMPS)
+	@assert unitcell_size(y) == unitcell_size(x)
+end
+
 """
 	canonicalize!(x::InfiniteMPS; alg::Orthogonalize)
 Preparing an infinite symmetric mps into (right-)canonical form
 Reference: PHYSICAL REVIEW B 78, 155117 
 """
-function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, TruncationDimCutoff} = Orthogonalize(TK.SVD(), DefaultTruncation, normalize=true), tolchol::Real=CHOL_SPLIT_TOL)
-	alg.normalize || throw(ArgumentError("normalization has been doen for infinite mps"))
+function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, TruncationDimCutoff} = Orthogonalize(TK.SVD(), DefaultTruncation, normalize=false))
+	# alg.normalize || throw(ArgumentError("normalization has been doen for infinite mps"))
 	eta, Vl, Vr = leading_boundaries(x)
 	# println("eta is ", eta)
+	tolchol = alg.trunc.ϵ / 10
 	Y = chol_split(Vl, tolchol)
 	X = chol_split(Vr, tolchol)'
 	U, S, V = tsvd!(Y * X, trunc=alg.trunc)

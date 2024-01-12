@@ -58,12 +58,10 @@ function transfer_right(right::MPSBondTensor, m::TransferMatrix)
 	return right
 end
 
-function random_boundaries(x::TransferMatrix) 
-	T = scalartype(x)
-	vl = TensorMap(randn, T, space_l(x.above[1]), space_l(x.below[1]))
-	vr = TensorMap(randn, T, space_r(x.below[end])', space_r(x.above[end])')
-	return vl, vr
-end
+random_left_boundary(x::TransferMatrix) = TensorMap(randn, scalartype(x), space_l(x.above[1]), space_l(x.below[1]))
+random_right_boundary(x::TransferMatrix) = TensorMap(randn, scalartype(x), space_r(x.below[end])', space_r(x.above[end])')
+
+random_boundaries(x::TransferMatrix) = (random_left_boundary(x), random_right_boundary(x))
 
 # function Base.convert(::Type{<:TensorMap}, x::TransferMatrix)
 # 	hleft = transfer_matrix(x.above[1], x.below[1])

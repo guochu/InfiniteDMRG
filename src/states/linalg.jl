@@ -26,3 +26,24 @@ function get_common_data(a::AbstractInfiniteTN, b::AbstractInfiniteTN)
     Bdata = [b[i] for i in 1:cellsize]
     return Adata, Bdata
 end
+
+function TK.dot(x::InfiniteMPS, y::InfiniteMPS)
+    cell = TransferMatrix(x, y)
+    vl = random_left_boundary(cell)
+    left_eigenvalue, left_eigenvector = _eigsolve(x -> transfer_left(x, cell), vl)
+    T = promote_type(scalartype(x), scalartype(y))
+    if (T <: Real) && isa(left_eigenvalue, Complex)
+        (abs(imag(left_eigenvalue)) < 1.0e-12) || @warn "imaginary part of eigenvalue is $(imag(eigenvalue))"
+        left_eigenvalue = real(left_eigenvalue)
+    end
+    return left_eigenvalue
+end
+function TK.norm(x::InfiniteMPS; iscanonical::Bool=false)
+    if iscanonical
+        return norm(x.s[1])
+    else
+        return sqrt(abs(dot(x, x)))
+    end
+end
+
+DMRG.distance(x::InfiniteMPS, y::InfiniteMPS) = DMRG._distance(x, y)
