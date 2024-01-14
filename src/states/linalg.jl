@@ -20,7 +20,7 @@ function Base.:+(psiA::InfiniteMPS, psiB::InfiniteMPS)
 end
 
 
-function get_common_data(a::AbstractInfiniteTN, b::AbstractInfiniteTN)
+function get_common_data(a, b)
     cellsize = max(unitcell_size(a), unitcell_size(b))
     Adata = [a[i] for i in 1:cellsize]
     Bdata = [b[i] for i in 1:cellsize]
@@ -30,7 +30,7 @@ end
 function TK.dot(x::InfiniteMPS, y::InfiniteMPS)
     cell = TransferMatrix(x, y)
     vl = random_left_boundary(cell)
-    left_eigenvalue, left_eigenvector = _eigsolve(x -> transfer_left(x, cell), vl)
+    left_eigenvalue, left_eigenvector = _eigsolve(x -> x * cell, vl)
     T = promote_type(scalartype(x), scalartype(y))
     if (T <: Real) && isa(left_eigenvalue, Complex)
         (abs(imag(left_eigenvalue)) < 1.0e-12) || @warn "imaginary part of eigenvalue is $(imag(eigenvalue))"

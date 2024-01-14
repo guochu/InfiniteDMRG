@@ -1,4 +1,5 @@
-abstract type AbstractInfiniteMPO{A <: MPOTensor} <: AbstractInfiniteTN{A} end
+abstract type AbstractInfiniteMPO{A <: MPOTensor} <: AbstractMPO{A} end
+unitcell_size(m::AbstractInfiniteMPO) = length(m)
 
 struct InfiniteMPO{M<:MPOTensor} <: AbstractInfiniteMPO{M}
 	data::PeriodicArray{M, 1}
@@ -13,7 +14,13 @@ end
 
 InfiniteMPO(data::AbstractVector{<:MPOTensor}) = InfiniteMPO(PeriodicArray(data))
 
+storage(a::InfiniteMPO) = a.data
 Base.copy(h::InfiniteMPO) = InfiniteMPO(storage(h))
+Base.length(a::InfiniteMPO) = length(storage(a))
+Base.isempty(a::InfiniteMPO) = isempty(storage(a))
+Base.getindex(a::InfiniteMPO, i::Int) = getindex(storage(a), i)
+Base.firstindex(a::InfiniteMPO) = firstindex(storage(a))
+Base.lastindex(a::InfiniteMPO) = lastindex(storage(a))
 
 function Base.complex(psi::InfiniteMPO)
 	if scalartype(psi) <: Real

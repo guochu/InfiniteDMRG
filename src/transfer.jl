@@ -36,32 +36,31 @@
 # end
 
 
-struct TransferMatrix{M <: Union{MPSTensor, MPOTensor}}
-	above::Vector{M}
-	below::Vector{M}
-end
+# struct TransferMatrix{M <: Union{MPSTensor, MPOTensor}}
+# 	above::Vector{M}
+# 	below::Vector{M}
+# end
 
-Base.length(x::TransferMatrix) = length(x.above)
-TK.scalartype(::Type{TransferMatrix{M}}) where M = scalartype(M)
+# Base.length(x::TransferMatrix) = length(x.above)
+# TK.scalartype(::Type{TransferMatrix{M}}) where M = scalartype(M)
 
-function transfer_left(left::MPSBondTensor, m::TransferMatrix)
-	for (a, b) in zip(m.above, m.below)
-		left = updateleft(left, a, b)
-	end
-	return left
-end
+# function transfer_left(left::MPSBondTensor, m::TransferMatrix)
+# 	for (a, b) in zip(m.above, m.below)
+# 		left = updateleft(left, a, b)
+# 	end
+# 	return left
+# end
 
-function transfer_right(right::MPSBondTensor, m::TransferMatrix)
-	for (a, b) in Iterators.reverse(zip(m.above, m.below))
-		right = updateright(right, a, b)
-	end
-	return right
-end
+# function transfer_right(right::MPSBondTensor, m::TransferMatrix)
+# 	for (a, b) in Iterators.reverse(zip(m.above, m.below))
+# 		right = updateright(right, a, b)
+# 	end
+# 	return right
+# end
 
-random_left_boundary(x::TransferMatrix) = TensorMap(randn, scalartype(x), space_l(x.above[1]), space_l(x.below[1]))
-random_right_boundary(x::TransferMatrix) = TensorMap(randn, scalartype(x), space_r(x.below[end])', space_r(x.above[end])')
-
-random_boundaries(x::TransferMatrix) = (random_left_boundary(x), random_right_boundary(x))
+random_left_boundary(x::OverlapTransferMatrix) = TensorMap(randn, scalartype(x), space_l(x.above[1]), space_l(x.below[1]))
+random_right_boundary(x::OverlapTransferMatrix) = TensorMap(randn, scalartype(x), space_r(x.below[end])', space_r(x.above[end])')
+random_boundaries(x::OverlapTransferMatrix) = (random_left_boundary(x), random_right_boundary(x))
 
 # function Base.convert(::Type{<:TensorMap}, x::TransferMatrix)
 # 	hleft = transfer_matrix(x.above[1], x.below[1])

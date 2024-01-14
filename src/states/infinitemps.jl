@@ -1,4 +1,3 @@
-abstract type AbstractInfiniteMPS{A <: MPSTensor} <: AbstractInfiniteTN{A} end
 """
 	struct InfiniteMPS{A <: MPSTensor, B <: MPSBondTensor} 
 
@@ -37,6 +36,14 @@ function Base.getproperty(psi::InfiniteMPS, s::Symbol)
 		return getfield(psi, s)
 	end
 end
+
+storage(a::InfiniteMPS) = a.data
+Base.length(a::InfiniteMPS) = length(storage(a))
+Base.isempty(a::InfiniteMPS) = isempty(storage(a))
+Base.getindex(a::InfiniteMPS, i::Int) = getindex(storage(a), i)
+Base.firstindex(a::InfiniteMPS) = firstindex(storage(a))
+Base.lastindex(a::InfiniteMPS) = lastindex(storage(a))
+
 
 function Base.setindex!(psi::InfiniteMPS, v::MPSTensor, i::Int)
 	return setindex!(psi.data, v, i)

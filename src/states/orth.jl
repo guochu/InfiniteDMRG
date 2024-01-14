@@ -1,16 +1,10 @@
-function TransferMatrix(a::InfiniteMPS, b::InfiniteMPS)
-	Adata, Bdata = get_common_data(a, b)
-	return TransferMatrix(Adata, Bdata)
-end
-TransferMatrix(a::InfiniteMPS) = TransferMatrix(a, a)
-
 function leading_boundaries(tn::InfiniteMPS) 
-	# Adata = [tn[i] for i in 1:unitcell_size(tn)]
-	cell = TransferMatrix(tn)
+	Adata = [tn[i] for i in 1:unitcell_size(tn)]
+	cell = TransferMatrix(Adata, Adata)
 	# if dim(space_l(tn)) >= 20
 	vl, vr = random_boundaries(cell)
-	left_eigenvalue, left_eigenvector = _eigsolve_pos(x -> transfer_left(x, cell), vl * vl')
-	right_eigenvalue, right_eigenvector = _eigsolve_pos(x -> transfer_right(x, cell), vr * vr')
+	left_eigenvalue, left_eigenvector = _eigsolve_pos(x -> x * cell, vl * vl')
+	right_eigenvalue, right_eigenvector = _eigsolve_pos(x -> cell * x, vr * vr')
 	# else
 	# 	m = convert(TensorMap, cell)
 	# 	left_eigenvalues, left_eigenvectors = eig!(permute(m, (3,4), (1,2)))
