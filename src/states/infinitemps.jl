@@ -18,9 +18,9 @@ function InfiniteMPS(data::PeriodicArray{A, 1}) where {A<:MPSTensor}
 	T = real(scalartype(A))
 	B = bondtensortype(spacetype(A), Diagonal{T, Vector{T}})
 	svectors = PeriodicArray{B, 1}(undef, length(data))
-	for i in 1:length(data)
-		svectors[i] = convert(B, id(space_l(data[i])))
-	end
+	# for i in 1:length(data)
+	# 	svectors[i] = convert(B, id(space_l(data[i])))
+	# end
 	return new{A, B}(data, svectors)
 end 
 
@@ -58,6 +58,8 @@ function Base.convert(::Type{<:InfiniteMPS}, psi::MPS)
 		return InfiniteMPS(psi.data, psi.svectors[1:length(psi)])
 	end
 end
+
+DMRG.svectors_uninitialized(psi::InfiniteMPS) = any(x->!isassigned(psi.svectors, x), 1:length(psi))
 
 DMRG.isrightcanonical(a::InfiniteMPS; kwargs...) = all(x->isrightcanonical(x; kwargs...), a.data)
 DMRG.isleftcanonical(a::InfiniteMPS; kwargs...) = all(x->isleftcanonical(x; kwargs...), a.data)

@@ -12,6 +12,7 @@ println("------------------------------------")
 		@test !isdual(space(psi[i], 2))
 		@test isdual(space(psi[i], 3))
 	end
+	canonicalize!(psi)
 	for i in (1, length(psi)+1)
 		@test !isdual(space(psi.s[i], 1))
 		@test isdual(space(psi.s[i], 2))

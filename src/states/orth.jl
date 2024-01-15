@@ -41,9 +41,9 @@ end
 
 const CHOL_SPLIT_TOL = 1.0e-12
 
-function approximate!(y::InfiniteMPS, x::InfiniteMPS)
-	@assert unitcell_size(y) == unitcell_size(x)
-end
+# function approximate!(y::InfiniteMPS, x::InfiniteMPS)
+# 	@assert unitcell_size(y) == unitcell_size(x)
+# end
 
 """
 	canonicalize!(x::InfiniteMPS; alg::Orthogonalize)
