@@ -93,9 +93,9 @@ function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, Truncatio
 	# x[1] = @tensor tmp[1,3; 4] := inv(S)[1,2] * x[1][2,3,4] 
 	# x[1] = permute(S \ permute(x[1], (1,), (2,3)), (1,2), (3,))
 	# x.s[1] = S
+
+	# Is it better to truncate the first site again?
 	v, ss, xj2, err = stable_tsvd(x[1], (1,), (2,3), trunc=alg.trunc)
-	# ss = lmul!(norm(S), ss)
-	# alg.normalize && (normalize!(ss))
 	if alg.normalize
 		normalize!(ss)
 		x[1] = permute(xj2, (1,2), (3,))
