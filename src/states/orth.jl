@@ -3,8 +3,8 @@ function leading_boundaries(tn::InfiniteMPS)
 	cell = TransferMatrix(Adata, Adata)
 	# if dim(space_l(tn)) >= 20
 	vl, vr = random_boundaries(cell)
-	left_eigenvalue, left_eigenvector = _eigsolve_pos(x -> x * cell, vl * vl')
-	right_eigenvalue, right_eigenvector = _eigsolve_pos(x -> cell * x, vr * vr')
+	left_eigenvalue, left_eigenvector = largest_eigenpair_pos(x -> x * cell, vl * vl')
+	right_eigenvalue, right_eigenvector = largest_eigenpair_pos(x -> cell * x, vr * vr')
 	# else
 	# 	m = convert(TensorMap, cell)
 	# 	left_eigenvalues, left_eigenvectors = eig!(permute(m, (3,4), (1,2)))
@@ -20,33 +20,31 @@ function leading_boundaries(tn::InfiniteMPS)
 	return left_eigenvalue, left_eigenvector, right_eigenvector
 end
 
-function _eigsolve(f, v0)
-	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi(krylovdim=30, maxiter=Defaults.maxiter))
-	(info.converged >= 1) || error("dominate eigendecomposition fails to converge")
-	eigenvalue = eigenvalues[1]
-	eigenvector = eigenvectors[1]
-	return eigenvalue, eigenvector
+const EIGENVALUE_IMAG_TOL = 1.0e-12
+const EIGENVECTOR_IMAG_TOL = 1.0e-6
+
+
+function largest_eigenpair_pos(f, v0)
+	eigenvalue, eigenvector = largest_eigenpair(f, v0)
+	return eigenvalue, normalize_trace!(eigenvector)
 end
 
-function _eigsolve_real(f, v0)
-	eigenvalue, eigenvector = _eigsolve(f, v0)
+function largest_eigenpair(f, v0)
+	eigenvalue, eigenvector = _eigsolve_bare(f, v0)
 	eigenvector = normalize_angle!(eigenvector)
 	if (scalartype(v0) <: Real) && (scalartype(eigenvector) <: Complex)
-		(norm(imag(eigenvector)) < 1.0e-8 ) || @warn "norm of imaginary part of eigenvector is $(norm(imag(eigenvector)))"
-		(abs(imag(eigenvalue)) < 1.0e-12) || @warn "imaginary part of eigenvalue is $(imag(eigenvalue))"
-		return real(eigenvalue), real(eigenvector)
+		if (norm(imag(eigenvector)) / norm(real(eigenvector)) < EIGENVECTOR_IMAG_TOL) && (abs(imag(eigenvalue)) < EIGENVALUE_IMAG_TOL)
+			return real(eigenvalue), real(eigenvector)
+		end
 	end
 	return eigenvalue, eigenvector	
 end
 
-function _eigsolve_pos(f, v0)
-	eigenvalue, eigenvector = _eigsolve(f, v0)
-	eigenvector = normalize_trace!(eigenvector)
-	if (scalartype(v0) <: Real) && (scalartype(eigenvector) <: Complex)
-		(norm(imag(eigenvector)) < 1.0e-8 ) || @warn "norm of imaginary part of eigenvector is $(norm(imag(eigenvector)))"
-		(abs(imag(eigenvalue)) < 1.0e-12) || @warn "imaginary part of eigenvalue is $(imag(eigenvalue))"
-		return real(eigenvalue), real(eigenvector)
-	end
+function _eigsolve_bare(f, v0)
+	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi(krylovdim=30, maxiter=Defaults.maxiter))
+	(info.converged >= 1) || error("dominate eigendecomposition fails to converge")
+	eigenvalue = eigenvalues[1]
+	eigenvector = eigenvectors[1]
 	return eigenvalue, eigenvector
 end
 
@@ -102,8 +100,8 @@ function normalize_trace!(x::TensorMap)
 	return lmul!(1 / tr(x), x)
 end
 function normalize_angle!(x::TensorMap)
-	v = conj(TK._safesign(first(first(blocks(x))[2])))
-	return lmul!(v, x)
+	v = argmax(abs, argmax(abs, y[2]) for y in blocks(x) ) 
+	return lmul!(conj(TK._safesign(v)), x)
 end
 
 function chol_split(m::AbstractMatrix{<:Number}, tol::Real)

@@ -31,10 +31,10 @@ function TK.dot(x::InfiniteMPS, y::InfiniteMPS)
     Adata, Bdata = get_common_data(x, y)
     cell = TransferMatrix(Adata, Bdata)
     vl = random_left_boundary(cell)
-    left_eigenvalue, left_eigenvector = _eigsolve(x -> x * cell, vl)
+    left_eigenvalue, left_eigenvector = _eigsolve_bare(x -> x * cell, vl)
     T = promote_type(scalartype(x), scalartype(y))
     if (T <: Real) && isa(left_eigenvalue, Complex)
-        (abs(imag(left_eigenvalue)) < 1.0e-12) || @warn "imaginary part of eigenvalue is $(imag(eigenvalue))"
+        (abs(imag(left_eigenvalue)) < EIGENVALUE_IMAG_TOL) || @warn "imaginary part of eigenvalue is $(imag(eigenvalue))"
         left_eigenvalue = real(left_eigenvalue)
     end
     return left_eigenvalue
