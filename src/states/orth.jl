@@ -59,7 +59,7 @@ function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, Truncatio
 	# alg.normalize || throw(ArgumentError("normalization has been doen for infinite mps"))
 	eta, Vl, Vr = leading_boundaries(x)
 	# println("eta is ", eta)
-	tolchol = min(alg.trunc.ϵ / 10, CHOL_SPLIT_TOL)
+	tolchol = max(min((alg.trunc.ϵ)^2 * 100, CHOL_SPLIT_TOL), eps(Float64))
 	Y = chol_split(Vl, tolchol)
 	X = chol_split(Vr, tolchol)'
 	U, S, V = stable_tsvd!(Y * X, trunc=alg.trunc)
