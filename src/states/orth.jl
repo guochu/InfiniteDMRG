@@ -61,24 +61,26 @@ function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, Truncatio
 	# alg.normalize || throw(ArgumentError("normalization has been doen for infinite mps"))
 	eta, Vl, Vr = leading_boundaries(x)
 	# println("eta is ", eta)
-	tolchol = alg.trunc.ϵ / 10
+	tolchol = min(alg.trunc.ϵ / 10, CHOL_SPLIT_TOL)
 	Y = chol_split(Vl, tolchol)
 	X = chol_split(Vr, tolchol)'
-	U, S, V = tsvd!(Y * X, trunc=alg.trunc)
+	U, S, V = stable_tsvd!(Y * X, trunc=alg.trunc)
 	alg.normalize && normalize!(S)
 	
-	m = (S * V) / X
+	# m = (S * V) / X
+	m = U' * Y
 	L = unitcell_size(x)
 	for i in 1:(L-1)
 		@tensor xj[1,3; 4] := m[1, 2] * x[i][2,3,4]
 		x[i], m = leftorth!(xj, alg=TK.QRpos())
 	end
-	m2 = Y \ (U * S)
+	# m2 = Y \ (U * S)
+	m2 = X * V'
 	x[L] = @tensor tmp[1,3; 5] := m[1,2] * x[L][2,3,4] * m2[4,5]
 	
 	for i in L:-1:2
 		# @tensor xj[1; 2 4] := x[i][1,2,3] * m[3,4]
-		v, ss, xj2, err = tsvd(x[i], (1,), (2,3), trunc=alg.trunc)
+		v, ss, xj2, err = stable_tsvd(x[i], (1,), (2,3), trunc=alg.trunc)
 		x[i] = permute(xj2, (1,2), (3,))
 		alg.normalize && (normalize!(ss))
 		x.s[i] = ss
@@ -90,7 +92,8 @@ function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, Truncatio
 	# x[1] = @tensor tmp[1,3; 4] := (1/sqrt(trace)) * inv(S)[1,2] * x[1][2,3,4] 
 	# x.s[1] = alg.normalize ? S : lmul!(1 / sqrt(trace), S) 
 
-	x[1] = @tensor tmp[1,3; 4] := inv(S)[1,2] * x[1][2,3,4] 
+	# x[1] = @tensor tmp[1,3; 4] := inv(S)[1,2] * x[1][2,3,4] 
+	x[1] = permute(S \ permute(x[1], (1,), (2,3)), (1,2), (3,))
 	x.s[1] = S
 	return x
 end
@@ -115,7 +118,7 @@ function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     	end
     end
     # positivity check
-    (maximum(abs, view(evals, 1:k-1), init=0.) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (with eigenvalue $(maximum(abs, view(evals, 1:k-1), init=0.))"
+    (maximum(abs, view(evals, 1:k-1), init=0.) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (with eigenvalue $(argmax(abs, view(evals, 1:k-1)))"
     return Diagonal(sqrt.(evals[k:end])) * evecs[:, k:end]'
 end
 
