@@ -28,7 +28,8 @@ function get_common_data(a, b, start::Int, _end::Int)
 end
 
 function TK.dot(x::InfiniteMPS, y::InfiniteMPS)
-    cell = TransferMatrix(x, y)
+    Adata, Bdata = get_common_data(x, y)
+    cell = TransferMatrix(Adata, Bdata)
     vl = random_left_boundary(cell)
     left_eigenvalue, left_eigenvector = _eigsolve(x -> x * cell, vl)
     T = promote_type(scalartype(x), scalartype(y))
@@ -38,12 +39,11 @@ function TK.dot(x::InfiniteMPS, y::InfiniteMPS)
     end
     return left_eigenvalue
 end
-function TK.norm(x::InfiniteMPS; iscanonical::Bool=false)
-    if iscanonical
-        return norm(x.s[1])
-    else
-        return sqrt(abs(dot(x, x)))
-    end
-end
-
-DMRG.distance(x::InfiniteMPS, y::InfiniteMPS) = DMRG._distance(x, y)
+TK.norm(x::InfiniteMPS) = sqrt(abs(dot(x, x)))
+# function TK.norm(x::InfiniteMPS; iscanonical::Bool=false)
+#     if iscanonical
+#         return norm(x[1]) / sqrt(dim(space_l(x)))
+#     else
+#         return sqrt(abs(dot(x, x)))
+#     end
+# end

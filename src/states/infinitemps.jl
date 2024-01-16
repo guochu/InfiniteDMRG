@@ -48,7 +48,13 @@ Base.lastindex(a::InfiniteMPS) = lastindex(storage(a))
 function Base.setindex!(psi::InfiniteMPS, v::MPSTensor, i::Int)
 	return setindex!(psi.data, v, i)
 end 
-Base.copy(psi::InfiniteMPS) = InfiniteMPS(copy(psi.data), copy(psi.svectors))
+function Base.copy(psi::InfiniteMPS) 
+	if svectors_uninitialized(psi)
+		return InfiniteMPS(copy(psi.data))
+	else
+		return InfiniteMPS(copy(psi.data), copy(psi.svectors))
+	end
+end
 
 function Base.convert(::Type{<:InfiniteMPS}, psi::MPS)
 	(space_l(psi) == space_r(psi)') || throw(SpaceMismatch("boundary space mismatch"))

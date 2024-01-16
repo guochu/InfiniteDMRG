@@ -28,6 +28,17 @@ function _eigsolve(f, v0)
 	return eigenvalue, eigenvector
 end
 
+function _eigsolve_real(f, v0)
+	eigenvalue, eigenvector = _eigsolve(f, v0)
+	eigenvector = normalize_angle!(eigenvector)
+	if (scalartype(v0) <: Real) && (scalartype(eigenvector) <: Complex)
+		(norm(imag(eigenvector)) < 1.0e-8 ) || @warn "norm of imaginary part of eigenvector is $(norm(imag(eigenvector)))"
+		(abs(imag(eigenvalue)) < 1.0e-12) || @warn "imaginary part of eigenvalue is $(imag(eigenvalue))"
+		return real(eigenvalue), real(eigenvector)
+	end
+	return eigenvalue, eigenvector	
+end
+
 function _eigsolve_pos(f, v0)
 	eigenvalue, eigenvector = _eigsolve(f, v0)
 	eigenvector = normalize_trace!(eigenvector)
@@ -40,10 +51,6 @@ function _eigsolve_pos(f, v0)
 end
 
 const CHOL_SPLIT_TOL = 1.0e-12
-
-# function approximate!(y::InfiniteMPS, x::InfiniteMPS)
-# 	@assert unitcell_size(y) == unitcell_size(x)
-# end
 
 """
 	canonicalize!(x::InfiniteMPS; alg::Orthogonalize)
@@ -78,6 +85,11 @@ function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, Truncatio
 		m = v * ss
 		x[i-1] = @tensor tmp[1,2;4] := x[i-1][1,2,3] * m[3,4]
 	end
+	# @tensor trace = Vl[1,2] * Vr[2,1]
+	# println("trace is ", trace)
+	# x[1] = @tensor tmp[1,3; 4] := (1/sqrt(trace)) * inv(S)[1,2] * x[1][2,3,4] 
+	# x.s[1] = alg.normalize ? S : lmul!(1 / sqrt(trace), S) 
+
 	x[1] = @tensor tmp[1,3; 4] := inv(S)[1,2] * x[1][2,3,4] 
 	x.s[1] = S
 	return x
@@ -86,7 +98,10 @@ end
 function normalize_trace!(x::TensorMap)
 	return lmul!(1 / tr(x), x)
 end
-
+function normalize_angle!(x::TensorMap)
+	v = conj(TK._safesign(first(first(blocks(x))[2])))
+	return lmul!(v, x)
+end
 
 function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     # println("m is hermitian? $(maximum(abs.(m - m'))).")

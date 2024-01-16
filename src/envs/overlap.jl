@@ -12,7 +12,6 @@ struct InfiniteOverlapCache{_A, _B, _L, _R, _T} <: AbstractInfiniteCache
 	left::_L
 	right::_R
 	η::_T
-	trace::_T
 end
 
 Base.length(x::InfiniteOverlapCache) = max(length(x.A), length(x.B))
@@ -27,11 +26,11 @@ function DMRG.environments(psiA::M, psiB::M) where {M <: Union{InfiniteMPS, Infi
 	Adata, Bdata = get_common_data(psiA, psiB)
 	cell = TransferMatrix(Adata, Bdata)
 	vl, vr = random_boundaries(cell)
-	left_eigenvalue, left_eigenvector = _eigsolve(x -> x * cell, vl)
-	right_eigenvalue, right_eigenvector = _eigsolve(x -> cell * x, vr)
+	left_eigenvalue, left_eigenvector = _eigsolve_real(x -> x * cell, vl)
+	right_eigenvalue, right_eigenvector = _eigsolve_real(x -> cell * x, vr)
 	(left_eigenvalue ≈ right_eigenvalue) || @warn "left and right dominate eigenvalues $(left_eigenvalue) and $(right_eigenvalue) mismatch"
 	@tensor trace = left_eigenvector[1,2] * right_eigenvector[2,1]
-	return InfiniteOverlapCache(psiA, psiB, left_eigenvector, right_eigenvector, left_eigenvalue, trace)
+	return InfiniteOverlapCache(psiA, psiB, lmul!(1/trace, left_eigenvector), right_eigenvector, left_eigenvalue)
 end
 
 function DMRG.leftenv(x::InfiniteOverlapCache, i::Int)
@@ -44,3 +43,4 @@ function DMRG.rightenv(x::InfiniteOverlapCache, i::Int)
 	Adata, Bdata = get_common_data(x.A, x.B, i+1, pos)
 	return TransferMatrix(Adata, Bdata) * right_boundary(x)
 end
+DMRG.value(x::InfiniteOverlapCache, nperiod::Int=1) = leading_eigenvalue(x)^nperiod
