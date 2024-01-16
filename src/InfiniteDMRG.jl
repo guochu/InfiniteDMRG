@@ -2,7 +2,7 @@ module InfiniteDMRG
 
 
 # infinite MPS
-export InfiniteMPS, prodimps, randomimps, unitcell_size
+export AbstractInfiniteMPS, InfiniteMPS, prodimps, randomimps, unitcell_size
 
 # infinite MPO
 export InfiniteMPO, randomimpo
