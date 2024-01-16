@@ -91,8 +91,21 @@ function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, Truncatio
 	# x.s[1] = alg.normalize ? S : lmul!(1 / sqrt(trace), S) 
 
 	# x[1] = @tensor tmp[1,3; 4] := inv(S)[1,2] * x[1][2,3,4] 
-	x[1] = permute(S \ permute(x[1], (1,), (2,3)), (1,2), (3,))
-	x.s[1] = S
+	# x[1] = permute(S \ permute(x[1], (1,), (2,3)), (1,2), (3,))
+	# x.s[1] = S
+	v, ss, xj2, err = stable_tsvd(x[1], (1,), (2,3), trunc=alg.trunc)
+	# ss = lmul!(norm(S), ss)
+	# alg.normalize && (normalize!(ss))
+	if alg.normalize
+		normalize!(ss)
+		x[1] = permute(xj2, (1,2), (3,))
+		x.s[1] = ss
+	else
+		n = norm(ss) / norm(S)
+		x[1] = lmul!(n, permute(xj2, (1,2), (3,)))
+		x.s[1] = lmul!(1/n, ss) 
+	end
+	x[end] = x[end] * v
 	return x
 end
 

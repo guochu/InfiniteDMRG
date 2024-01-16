@@ -3,8 +3,19 @@ using Reexport, KrylovKit, Parameters
 @reexport using SphericalTensors, DMRG
 const TK = SphericalTensors
 using LinearAlgebra: eigen, Hermitian
-using DMRG: TimeEvoMPOAlgorithm, simple_lanczos_solver, left_embedders, right_embedders, Defaults, svectors_uninitialized
+using DMRG: TimeEvoMPOAlgorithm, simple_lanczos_solver, left_embedders, right_embedders, svectors_uninitialized
 using DMRG: svectors_uninitialized, updateright, updateleft, OverlapTransferMatrix
+
+#default settings
+module Defaults
+	const maxiter = 300 # for Arnoldi iteration to find largest eigenpair
+	const D = 100 # default bond dimension 
+	const tolgauge = 1e-14 # for MPS truncation
+	const tol = 1e-12 # for DMRG iteration
+	const tollanczos = 1.0e-10 # for lanczos eigensolver
+	const tolexp = 1.0e-8 # for local eigen in DMRG
+	const verbosity = 1
+end
 
 const DefaultTruncation = TruncationDimCutoff(D=Defaults.D, ϵ=1.0e-12, add_back=0)
 
@@ -33,4 +44,3 @@ include("algorithms/expecs.jl")
 include("algorithms/w1w2.jl")
 # include("algorithms/tdvp.jl")
 # include("algorithms/approximate.jl")
-
