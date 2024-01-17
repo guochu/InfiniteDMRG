@@ -2,7 +2,7 @@ module InfiniteDMRG
 
 
 # infinite MPS
-export AbstractInfiniteMPS, InfiniteMPS, prodimps, randomimps, unitcell_size
+export AbstractInfiniteMPS, InfiniteMPS, prodimps, randomimps, unitcell_size, InfiniteOrthogonalize
 
 # infinite MPO
 export InfiniteMPO, randomimpo
@@ -21,7 +21,7 @@ using Reexport, KrylovKit, Parameters
 const TK = SphericalTensors
 using LinearAlgebra: eigen, Hermitian
 using DMRG: TimeEvoMPOAlgorithm, simple_lanczos_solver, left_embedders, right_embedders
-using DMRG: updateright, updateleft, OverlapTransferMatrix
+using DMRG: updateright, updateleft, OverlapTransferMatrix, MatrixProductOrthogonalAlgorithm
 
 #default settings
 module Defaults

@@ -13,12 +13,6 @@ function InfiniteMPS(data::PeriodicArray{A, 1}, svectors::PeriodicArray{Union{Mi
 	return new{A, B}(data, svectors)
 end
 
-function InfiniteMPS(data::PeriodicArray{A, 1}, svectors::PeriodicArray{B, 1}) where {A<:MPSTensor, B<:DiagonalMap}
-	@assert length(data) == length(svectors)
-	check_mps_spaces(data)	
-	return new{A, B}(data, convert(PeriodicArray{Union{Missing, B}, 1}, svectors))
-end
-
 function InfiniteMPS(data::PeriodicArray{A, 1}) where {A<:MPSTensor}
 	check_mps_spaces(data)	
 	T = real(scalartype(A))
@@ -29,6 +23,8 @@ end
 
 end
 
+InfiniteMPS(data::PeriodicArray{A, 1}, svectors::PeriodicArray{B, 1}) where {A<:MPSTensor, B<:DiagonalMap} = InfiniteMPS(
+	data, convert(PeriodicArray{Union{Missing, B}, 1}, svectors))
 InfiniteMPS(data::AbstractVector{<:MPSTensor}, svectors::AbstractVector{<:Union{Missing, <:MPSBondTensor}}) = InfiniteMPS(PeriodicArray(data), PeriodicArray(svectors))
 InfiniteMPS(data::AbstractVector{<:MPSTensor}, svectors::AbstractVector{<:MPSBondTensor}) = InfiniteMPS(PeriodicArray(data), PeriodicArray(svectors))
 InfiniteMPS(data::AbstractVector{<:MPSTensor}) = InfiniteMPS(PeriodicArray(data))

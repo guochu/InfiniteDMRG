@@ -50,17 +50,26 @@ end
 
 const CHOL_SPLIT_TOL = 1.0e-14
 
+@with_kw struct InfiniteOrthogonalize <: MatrixProductOrthogonalAlgorithm
+	trunc::TruncationDimCutoff = DefaultTruncation
+	normalize::Bool=true
+	toleig::Float64 = Defaults.tolgauge
+	maxitereig::Int = Defaults.maxiter
+end
+
+DMRG.canonicalize!(x::InfiniteMPS; alg::MatrixProductOrthogonalAlgorithm=InfiniteOrthogonalize(normalize=false)) = canonicalize!(x, alg)
+DMRG.canonicalize!(x::InfiniteMPS, alg::Orthogonalize{TK.SVD, TruncationDimCutoff}) = canonicalize!(
+	x, InfiniteOrthogonalize(trunc=alg.trunc, normalize=alg.normalize, toleig=Defaults.tolgauge, maxitereig=Defaults.maxiter))
 """
 	canonicalize!(x::InfiniteMPS; alg::Orthogonalize)
 Preparing an infinite symmetric mps into (right-)canonical form
 Reference: PHYSICAL REVIEW B 78, 155117 
 """
-function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, TruncationDimCutoff} = Orthogonalize(TK.SVD(), DefaultTruncation, normalize=false), 
-							tol::Real=Defaults.tolgauge, maxiter::Int=Defaults.maxiter)
+function DMRG.canonicalize!(x::InfiniteMPS, alg::InfiniteOrthogonalize)
 	# alg.normalize || throw(ArgumentError("normalization has been doen for infinite mps"))
 	# println("eta is ", eta)
-	tolchol = max(alg.trunc.ϵ * alg.trunc.ϵ, tol)
-	eta, Vl, Vr = leading_boundaries(x, tol=tolchol*10, maxiter=maxiter)
+	tolchol = max(alg.trunc.ϵ * alg.trunc.ϵ, alg.toleig)
+	eta, Vl, Vr = leading_boundaries(x, tol=tolchol*10, maxiter=alg.maxitereig)
 
 	Y = chol_split(Vl, tolchol)
 	X = chol_split(Vr, tolchol)'

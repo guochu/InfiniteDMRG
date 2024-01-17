@@ -3,12 +3,12 @@ using Reexport, KrylovKit, Parameters
 @reexport using SphericalTensors, DMRG
 const TK = SphericalTensors
 using LinearAlgebra: eigen, Hermitian
-using DMRG: TimeEvoMPOAlgorithm, simple_lanczos_solver, left_embedders, right_embedders, svectors_uninitialized
-using DMRG: svectors_uninitialized, updateright, updateleft, OverlapTransferMatrix
+using DMRG: TimeEvoMPOAlgorithm, simple_lanczos_solver, left_embedders, right_embedders
+using DMRG: updateright, updateleft, OverlapTransferMatrix, MatrixProductOrthogonalAlgorithm
 
 #default settings
 module Defaults
-	const maxiter = 300 # for Arnoldi iteration to find largest eigenpair
+	const maxiter = 500 # for Arnoldi iteration to find largest eigenpair
 	const D = 100 # default bond dimension 
 	const tolgauge = 1e-14 # for MPS truncation
 	const tol = 1e-12 # for DMRG iteration
