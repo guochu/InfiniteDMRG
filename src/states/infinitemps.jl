@@ -29,7 +29,7 @@ end
 
 end
 
-InfiniteMPS(data::AbstractVector{<:MPSTensor}, svectors::AbstractVector{Union{Missing, <:MPSBondTensor}}) = InfiniteMPS(PeriodicArray(data), PeriodicArray(svectors))
+InfiniteMPS(data::AbstractVector{<:MPSTensor}, svectors::AbstractVector{<:Union{Missing, <:MPSBondTensor}}) = InfiniteMPS(PeriodicArray(data), PeriodicArray(svectors))
 InfiniteMPS(data::AbstractVector{<:MPSTensor}, svectors::AbstractVector{<:MPSBondTensor}) = InfiniteMPS(PeriodicArray(data), PeriodicArray(svectors))
 InfiniteMPS(data::AbstractVector{<:MPSTensor}) = InfiniteMPS(PeriodicArray(data))
 
