@@ -69,7 +69,7 @@ function DMRG.canonicalize!(x::InfiniteMPS, alg::InfiniteOrthogonalize)
 	# alg.normalize || throw(ArgumentError("normalization has been doen for infinite mps"))
 	# println("eta is ", eta)
 	tolchol = max(alg.trunc.ϵ * alg.trunc.ϵ, alg.toleig)
-	eta, Vl, Vr = leading_boundaries(x, tol=tolchol*10, maxiter=alg.maxitereig)
+	eta, Vl, Vr = leading_boundaries(x, tol=tolchol/10, maxiter=alg.maxitereig)
 
 	Y = chol_split(Vl, tolchol)
 	X = chol_split(Vr, tolchol)'
