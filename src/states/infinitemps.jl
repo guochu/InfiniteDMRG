@@ -5,27 +5,31 @@ The singular vector on the first site is important!!!
 """
 struct InfiniteMPS{A <: MPSTensor, B <: MPSBondTensor} <: AbstractInfiniteMPS{A}
 	data::PeriodicArray{A, 1}
-	svectors::PeriodicArray{B, 1}
+	svectors::PeriodicArray{Union{Missing, B}, 1}
+
+function InfiniteMPS(data::PeriodicArray{A, 1}, svectors::PeriodicArray{Union{Missing, B}, 1}) where {A<:MPSTensor, B<:DiagonalMap}
+	@assert length(data) == length(svectors)
+	check_mps_spaces(data)	
+	return new{A, B}(data, svectors)
+end
 
 function InfiniteMPS(data::PeriodicArray{A, 1}, svectors::PeriodicArray{B, 1}) where {A<:MPSTensor, B<:DiagonalMap}
 	@assert length(data) == length(svectors)
 	check_mps_spaces(data)	
-	return new{A, B}(data, svectors)
+	return new{A, B}(data, convert(PeriodicArray{Union{Missing, B}, 1}, svectors))
 end
 
 function InfiniteMPS(data::PeriodicArray{A, 1}) where {A<:MPSTensor}
 	check_mps_spaces(data)	
 	T = real(scalartype(A))
 	B = bondtensortype(spacetype(A), Diagonal{T, Vector{T}})
-	svectors = PeriodicArray{B, 1}(undef, length(data))
-	# for i in 1:length(data)
-	# 	svectors[i] = convert(B, id(space_l(data[i])))
-	# end
+	svectors = PeriodicArray{Union{Missing, B}, 1}(missing, length(data))
 	return new{A, B}(data, svectors)
 end 
 
 end
 
+InfiniteMPS(data::AbstractVector{<:MPSTensor}, svectors::AbstractVector{Union{Missing, <:MPSBondTensor}}) = InfiniteMPS(PeriodicArray(data), PeriodicArray(svectors))
 InfiniteMPS(data::AbstractVector{<:MPSTensor}, svectors::AbstractVector{<:MPSBondTensor}) = InfiniteMPS(PeriodicArray(data), PeriodicArray(svectors))
 InfiniteMPS(data::AbstractVector{<:MPSTensor}) = InfiniteMPS(PeriodicArray(data))
 
@@ -48,24 +52,18 @@ Base.lastindex(a::InfiniteMPS) = lastindex(storage(a))
 function Base.setindex!(psi::InfiniteMPS, v::MPSTensor, i::Int)
 	return setindex!(psi.data, v, i)
 end 
-function Base.copy(psi::InfiniteMPS) 
-	if svectors_uninitialized(psi)
-		return InfiniteMPS(copy(psi.data))
-	else
-		return InfiniteMPS(copy(psi.data), copy(psi.svectors))
-	end
-end
+Base.copy(psi::InfiniteMPS) = InfiniteMPS(copy(psi.data), copy(psi.svectors))
 
 function Base.convert(::Type{<:InfiniteMPS}, psi::MPS)
 	(space_l(psi) == space_r(psi)') || throw(SpaceMismatch("boundary space mismatch"))
-	if svectors_uninitialized(psi)
-		return InfiniteMPS(psi.data)
-	else
-		return InfiniteMPS(psi.data, psi.svectors[1:length(psi)])
-	end
+	return InfiniteMPS(psi.data, psi.svectors[1:length(psi)])
 end
 
-DMRG.svectors_uninitialized(psi::InfiniteMPS) = any(x->!isassigned(psi.svectors, x), 1:length(psi))
+DMRG.svectors_uninitialized(psi::InfiniteMPS) = any(ismissing, psi.svectors)
+function DMRG.unset_svectors!(psi::InfiniteMPS)
+	psi.svectors .= missing
+	return psi
+end
 
 DMRG.isrightcanonical(a::InfiniteMPS; kwargs...) = all(x->isrightcanonical(x; kwargs...), a.data)
 DMRG.isleftcanonical(a::InfiniteMPS; kwargs...) = all(x->isleftcanonical(x; kwargs...), a.data)

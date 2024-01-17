@@ -1,10 +1,10 @@
-function leading_boundaries(tn::InfiniteMPS) 
+function leading_boundaries(tn::InfiniteMPS; kwargs...) 
 	Adata = [tn[i] for i in 1:unitcell_size(tn)]
 	cell = TransferMatrix(Adata, Adata)
 	# if dim(space_l(tn)) >= 20
 	vl, vr = random_boundaries(cell)
-	left_eigenvalue, left_eigenvector = largest_eigenpair_pos(x -> x * cell, vl * vl')
-	right_eigenvalue, right_eigenvector = largest_eigenpair_pos(x -> cell * x, vr * vr')
+	left_eigenvalue, left_eigenvector = largest_eigenpair_pos(x -> x * cell, vl * vl'; kwargs...)
+	right_eigenvalue, right_eigenvector = largest_eigenpair_pos(x -> cell * x, vr * vr'; kwargs...)
 	# else
 	# 	m = convert(TensorMap, cell)
 	# 	left_eigenvalues, left_eigenvectors = eig!(permute(m, (3,4), (1,2)))
@@ -24,13 +24,13 @@ const EIGENVALUE_IMAG_TOL = 1.0e-12
 const EIGENVECTOR_IMAG_TOL = 1.0e-6
 
 
-function largest_eigenpair_pos(f, v0)
-	eigenvalue, eigenvector = largest_eigenpair(f, v0)
+function largest_eigenpair_pos(f, v0; kwargs...)
+	eigenvalue, eigenvector = largest_eigenpair(f, v0; kwargs...)
 	return eigenvalue, normalize_trace!(eigenvector)
 end
 
-function largest_eigenpair(f, v0)
-	eigenvalue, eigenvector = _eigsolve_bare(f, v0)
+function largest_eigenpair(f, v0; kwargs...)
+	eigenvalue, eigenvector = _eigsolve_bare(f, v0; kwargs...)
 	eigenvector = normalize_angle!(eigenvector)
 	if (scalartype(v0) <: Real) && (scalartype(eigenvector) <: Complex)
 		if (norm(imag(eigenvector)) / norm(real(eigenvector)) < EIGENVECTOR_IMAG_TOL) && (abs(imag(eigenvalue)) < EIGENVALUE_IMAG_TOL)
@@ -40,26 +40,28 @@ function largest_eigenpair(f, v0)
 	return eigenvalue, eigenvector	
 end
 
-function _eigsolve_bare(f, v0)
-	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi(krylovdim=30, maxiter=Defaults.maxiter))
+function _eigsolve_bare(f, v0; tol=Defaults.tolgauge, maxiter=Defaults.maxiter)
+	eigenvalues, eigenvectors, info = eigsolve(f, v0, 1, :LM, Arnoldi(;krylovdim=30, maxiter=maxiter, tol=tol))
 	(info.converged >= 1) || error("dominate eigendecomposition fails to converge")
 	eigenvalue = eigenvalues[1]
 	eigenvector = eigenvectors[1]
 	return eigenvalue, eigenvector
 end
 
-const CHOL_SPLIT_TOL = 1.0e-12
+const CHOL_SPLIT_TOL = 1.0e-14
 
 """
 	canonicalize!(x::InfiniteMPS; alg::Orthogonalize)
 Preparing an infinite symmetric mps into (right-)canonical form
 Reference: PHYSICAL REVIEW B 78, 155117 
 """
-function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, TruncationDimCutoff} = Orthogonalize(TK.SVD(), DefaultTruncation, normalize=false))
+function DMRG.canonicalize!(x::InfiniteMPS; alg::Orthogonalize{TK.SVD, TruncationDimCutoff} = Orthogonalize(TK.SVD(), DefaultTruncation, normalize=false), 
+							tol::Real=Defaults.tolgauge, maxiter::Int=Defaults.maxiter)
 	# alg.normalize || throw(ArgumentError("normalization has been doen for infinite mps"))
-	eta, Vl, Vr = leading_boundaries(x)
 	# println("eta is ", eta)
-	tolchol = max(min((alg.trunc.ϵ)^2 * 100, CHOL_SPLIT_TOL), eps(Float64))
+	tolchol = max(alg.trunc.ϵ * alg.trunc.ϵ, tol)
+	eta, Vl, Vr = leading_boundaries(x, tol=tolchol*10, maxiter=maxiter)
+
 	Y = chol_split(Vl, tolchol)
 	X = chol_split(Vr, tolchol)'
 	U, S, V = stable_tsvd!(Y * X, trunc=alg.trunc)
