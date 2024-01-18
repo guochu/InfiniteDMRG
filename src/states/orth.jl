@@ -3,8 +3,8 @@ function leading_boundaries(tn::InfiniteMPS; kwargs...)
 	cell = TransferMatrix(Adata, Adata)
 	# if dim(space_l(tn)) >= 20
 	vl, vr = random_boundaries(cell)
-	left_eigenvalue, left_eigenvector = largest_eigenpair_pos(x -> x * cell, vl * vl'; kwargs...)
-	right_eigenvalue, right_eigenvector = largest_eigenpair_pos(x -> cell * x, vr * vr'; kwargs...)
+	left_eigenvalue, left_eigenvector = largest_eigenpair(x -> x * cell, vl * vl'; kwargs...)
+	right_eigenvalue, right_eigenvector = largest_eigenpair(x -> cell * x, vr * vr'; kwargs...)
 	# else
 	# 	m = convert(TensorMap, cell)
 	# 	left_eigenvalues, left_eigenvectors = eig!(permute(m, (3,4), (1,2)))
@@ -17,17 +17,12 @@ function leading_boundaries(tn::InfiniteMPS; kwargs...)
 	# 	right_eigenvector = permute(right_eigenvectors[1], (2,), (1,))
 	# end
 	(left_eigenvalue ≈ right_eigenvalue) || @warn "left and right dominate eigenvalues $(left_eigenvalue) and $(right_eigenvalue) mismatch"
-	return left_eigenvalue, left_eigenvector, right_eigenvector
+	return left_eigenvalue, normalize_trace!(left_eigenvector), normalize_trace!(right_eigenvector)
 end
 
 const EIGENVALUE_IMAG_TOL = 1.0e-12
 const EIGENVECTOR_IMAG_TOL = 1.0e-6
 
-
-function largest_eigenpair_pos(f, v0; kwargs...)
-	eigenvalue, eigenvector = largest_eigenpair(f, v0; kwargs...)
-	return eigenvalue, normalize_trace!(eigenvector)
-end
 
 function largest_eigenpair(f, v0; kwargs...)
 	eigenvalue, eigenvector = _eigsolve_bare(f, v0; kwargs...)
