@@ -48,7 +48,6 @@ function _eigsolve_bare(f, v0; tol=Defaults.tolgauge, maxiter=Defaults.maxiter)
 	return eigenvalue, eigenvector
 end
 
-const CHOL_SPLIT_TOL = 1.0e-14
 
 @with_kw struct InfiniteOrthogonalize <: MatrixProductOrthogonalAlgorithm
 	trunc::TruncationDimCutoff = DefaultTruncation
@@ -128,6 +127,8 @@ function normalize_angle!(x::TensorMap)
 	return lmul!(conj(TK._safesign(v)), x)
 end
 
+const CHOL_SPLIT_TOL = 1.0e-12
+
 function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     # println("m is hermitian? $(maximum(abs.(m - m'))).")
     evals, evecs = eigen(Hermitian(m))
@@ -140,7 +141,7 @@ function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     	end
     end
     # positivity check
-    (maximum(abs, view(evals, 1:k-1), init=0.) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (with eigenvalue $(argmax(abs, view(evals, 1:k-1)))"
+    (maximum(-, view(evals, 1:k-1), init=0.) < CHOL_SPLIT_TOL) || @warn "input matrix is not positive (with negative eigenvalue $(argmax(-, view(evals, 1:k-1)))"
     return Diagonal(sqrt.(evals[k:end])) * evecs[:, k:end]'
 end
 
