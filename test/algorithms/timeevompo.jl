@@ -53,7 +53,7 @@ function infinite_xxz_mpo()
 
 	m = fromABCD(C=[2*sp, 2*sm, Jzz*sz], B= [sp', sm', sz], D=hz*sz)
 	h = MPOHamiltonian([m])
-	U = timeevompo(h, -0.01im, InfiniteWII())
+	U = timeevompo(h, -0.01im, WII())
 
 	mpo = InfiniteMPO(U)
 

@@ -12,7 +12,6 @@ export left_boundary, right_boundary, leading_eigenvalue
 
 # algorithm
 export num_period
-export InfiniteWI, InfiniteWII
 
 
 using Logging: @warn
@@ -20,7 +19,7 @@ using Reexport, KrylovKit, Parameters
 @reexport using SphericalTensors, DMRG
 const TK = SphericalTensors
 using LinearAlgebra: eigen, Hermitian
-using DMRG: TimeEvoMPOAlgorithm, simple_lanczos_solver, left_embedders, right_embedders
+using DMRG: left_embedders, right_embedders
 using DMRG: updateright, updateleft, OverlapTransferMatrix, MatrixProductOrthogonalAlgorithm
 
 #default settings
@@ -58,7 +57,6 @@ include("envs/environments.jl")
 
 # algorithms
 include("algorithms/expecs.jl")
-include("algorithms/w1w2.jl")
 # include("algorithms/tdvp.jl")
 # include("algorithms/approximate.jl")
 
