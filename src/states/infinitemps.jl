@@ -49,6 +49,13 @@ function Base.setindex!(psi::InfiniteMPS, v::MPSTensor, i::Int)
 	return setindex!(psi.data, v, i)
 end 
 Base.copy(psi::InfiniteMPS) = InfiniteMPS(copy(psi.data), copy(psi.svectors))
+function Base.complex(psi::InfiniteMPS)
+	if scalartype(psi) <: Real
+		data = [complex(item) for item in psi.data]
+		return InfiniteMPS(data, psi.svectors)
+	end
+	return psi
+end
 
 function Base.convert(::Type{<:InfiniteMPS}, psi::MPS)
 	(space_l(psi) == space_r(psi)') || throw(SpaceMismatch("boundary space mismatch"))
