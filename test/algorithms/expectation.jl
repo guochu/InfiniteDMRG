@@ -17,12 +17,12 @@ println("------------------------------------")
 			observers = [PartialMPO([sp, sp'], [1, i+1]) for i in 1:30]
 			# observables
 			envs = environments(psi, psi)
-			obs1 = [expectation(ob, psi, envs) / value(envs, ob) for ob in observers]
+			obs1 = [expectationvalue(ob, psi, envs) for ob in observers]
 			# println(obs1)
 
 			psi2 = canonicalize!(copy(psi), alg = Orthogonalize(trunc=trunc, normalize=false))
 			envs = environments(psi2, psi2)
-			obs2 = [expectation(ob, psi2, envs) / value(envs, ob) for ob in observers]
+			obs2 = [expectationvalue(ob, psi2, envs) for ob in observers]
 			@test abs(dot(psi, psi) - dot(psi2, psi2)) < 1.0e-8
 			@test maximum(abs, obs1 - obs2) < 1.0e-8
 

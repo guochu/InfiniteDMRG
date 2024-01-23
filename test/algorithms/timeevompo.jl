@@ -32,13 +32,13 @@ function finite_xxz_mpo()
 	canonicalize!(state, alg=orth)	
 
 	envs = environments(state, state)
-	obs = [expectation(ob, state, envs) / value(envs) for ob in observers]
+	obs = [expectationvalue(ob, state, envs) for ob in observers]
 
 	for i in 1:10
 		state = mpo * state
 		canonicalize!(state, alg=orth)
 		envs = environments(state, state)
-		append!(obs, [expectation(ob, state, envs) / value(envs) for ob in observers])
+		append!(obs, [expectationvalue(ob, state, envs) for ob in observers])
 	end	
 	return obs
 end

@@ -28,6 +28,7 @@ This function requires iscanonical(psi) == true
 """
 DMRG.expectation_canonical(m::PartialMPO, psi::InfiniteMPS) = DMRG._expectation_canonical(m, psi)
 DMRG.expectation(m::PartialMPO, psi::InfiniteMPS, envs=environments(psi, psi)) = expectation(psi, m, psi, envs)
+DMRG.expectationvalue(m::PartialMPO, psi::InfiniteMPS, envs=environments(psi, psi)) = expectation(m, psi, envs) / value(envs, m)
 
 function num_period(_start::Int, _stop::Int, unitcellsize::Int)
 	_start = r_start(_start, unitcellsize)
