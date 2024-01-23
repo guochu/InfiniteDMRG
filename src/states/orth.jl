@@ -3,8 +3,19 @@ function leading_boundaries(tn::InfiniteMPS; kwargs...)
 	cell = TransferMatrix(Adata, Adata)
 	# if dim(space_l(tn)) >= 20
 	vl, vr = random_boundaries(cell)
-	left_eigenvalue, left_eigenvector = largest_eigenpair(x -> x * cell, vl * vl'; kwargs...)
-	right_eigenvalue, right_eigenvector = largest_eigenpair(x -> cell * x, vr * vr'; kwargs...)
+	vl = vl * vl'
+	vr = vr * vr'
+	if bond_dimension(tn) > 4*length(cell)
+		left_eigenvalue, left_eigenvector = largest_eigenpair(x -> x * cell, vl; kwargs...)
+		right_eigenvalue, right_eigenvector = largest_eigenpair(x -> cell * x, vr; kwargs...)		
+	else
+		dcell = convert(TensorMap, cell)
+		left_eigenvalue, left_eigenvector = largest_eigenpair(x -> x * dcell, permute(vl, (), (1,2)); kwargs...)
+		left_eigenvector = permute(left_eigenvector, (1,), (2,))
+		right_eigenvalue, right_eigenvector = largest_eigenpair(x -> dcell * x, permute(vr, (2,1), ()); kwargs...)
+		right_eigenvector = permute(right_eigenvector, (2,), (1,))
+	end
+
 	# else
 	# 	m = convert(TensorMap, cell)
 	# 	left_eigenvalues, left_eigenvectors = eig!(permute(m, (3,4), (1,2)))
