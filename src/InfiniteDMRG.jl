@@ -15,8 +15,9 @@ export num_period
 
 
 using Logging: @warn
-using Reexport, KrylovKit, Parameters
+using Reexport, KrylovKit
 @reexport using SphericalTensors, DMRG
+using SphericalTensors: QR, LQ, SVD
 const TK = SphericalTensors
 using LinearAlgebra: eigen, Hermitian
 using DMRG: left_embedders, right_embedders
@@ -43,7 +44,9 @@ include("states/abstractmps.jl")
 include("states/bondview.jl")
 include("states/infinitemps.jl")
 include("states/linalg.jl")
+include("states/orthutil.jl")
 include("states/orth.jl")
+include("states/orth2.jl")
 include("states/initializers.jl")
 
 
