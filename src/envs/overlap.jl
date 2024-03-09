@@ -1,14 +1,14 @@
 
 
 """
-	struct InfiniteOverlapCache{_A, _B, _C}
+	struct InfiniteOverlapCache{_M, _L, _R, _T}
 
 A is the bra, B is ket, ⟨A|B⟩, in iterative algorithms,
 A is the output, B is the input
 """
-struct InfiniteOverlapCache{_A, _B, _L, _R, _T} <: AbstractInfiniteCache
-	A::_A
-	B::_B
+struct InfiniteOverlapCache{_M, _L, _R, _T} <: AbstractInfiniteCache
+	A::_M
+	B::_M
 	left::_L
 	right::_R
 	η::_T
