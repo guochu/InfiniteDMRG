@@ -12,6 +12,7 @@ export left_boundary, right_boundary, leading_eigenvalue
 
 # algorithm
 export num_period
+export iterative_compress!, iterative_compress
 
 
 using Logging: @warn
@@ -62,6 +63,6 @@ include("envs/environments.jl")
 # algorithms
 include("algorithms/expecs.jl")
 # include("algorithms/tdvp.jl")
-# include("algorithms/approximate.jl")
+include("algorithms/approximate.jl")
 
 end

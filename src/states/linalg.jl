@@ -20,7 +20,7 @@ function Base.:+(psiA::InfiniteMPS, psiB::InfiniteMPS)
 end
 
 
-get_common_data(a, b) = get_common_data(a, b, 1, max(unitcell_size(a), unitcell_size(b)))
+get_common_data(a, b) = get_common_data(a, b, 1, max(length(a), length(b)))
 function get_common_data(a, b, start::Int, _end::Int)
     Adata = [a[i] for i in start:_end]
     Bdata = [b[i] for i in start:_end]

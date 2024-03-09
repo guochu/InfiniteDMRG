@@ -50,11 +50,11 @@ end
 DMRG.leftenv(x::InfiniteOverlapCache, i::Int) = x.left[i]
 DMRG.rightenv(x::InfiniteOverlapCache, i::Int) = x.right[i]
 
-DMRG.value(x::InfiniteOverlapCache, nperiod::Int=1) = leading_eigenvalue(x)^nperiod
-
-
-
-# for mixee-canonical form
-function DMRG.environments(psiA::M, psiB::M) where {M <: MixedCanonicalInfiniteMPS}
-	
+function setleftenv!(x::InfiniteOverlapCache, i::Int, v) 
+	x.left[i] = v
 end
+function setrightenv!(x::InfiniteOverlapCache, i::Int, v)
+	x.right[i] = v
+end
+
+DMRG.value(x::InfiniteOverlapCache, nperiod::Int=1) = leading_eigenvalue(x)^nperiod

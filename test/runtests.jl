@@ -16,3 +16,4 @@ include("mpo.jl")
 # algorithms
 include("algorithms/expectation.jl")
 include("algorithms/timeevompo.jl")
+include("algorithms/approximate.jl")
