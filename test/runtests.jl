@@ -13,7 +13,7 @@ include("states.jl")
 include("mpo.jl")
 
 
-# algorithms
+### algorithms
 include("algorithms/expectation.jl")
 include("algorithms/timeevompo.jl")
 include("algorithms/approximate.jl")

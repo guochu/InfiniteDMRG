@@ -50,13 +50,15 @@ function infinite_xxz_mpo_iterative()
 	initial_state = [-0.5, 0.5]
 	state = prodimps(ComplexF64, [pspace for i in 1:length(initial_state)], initial_state)
 
-	alg = DMRG1(D=100)
+	alg = DMRG1(D=100, verbosity=2)
 	state = iterative_compress(state, alg)	
 
 	observers = [PartialMPO([sp, sp'], [1, 1+i]) for i in 1:10]
 	obs = [expectation_canonical(ob, state) for ob in observers]
 	for i in 1:10
 		state = mpo * state
+		# D = max(alg.D, bond_dimension(state))
+		# state = iterative_compress!(randomimps(scalartype(state), physical_spaces(state), D=D), state, alg)	
 		state = iterative_compress(state, alg)	
 		append!(obs, [expectation_canonical(ob, state) for ob in observers])
 	end	

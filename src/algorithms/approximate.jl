@@ -16,7 +16,13 @@ function _iterative_compress!(y::InfiniteMPS, x::InfiniteMPS, alg::DMRG1)
 
 	AL = copy(y.data)
 	AR = copy(y.data)
-	CR = PeriodicArray([isomorphism(Matrix{scalartype(y)}, space_l(item), space_l(item)) for item in AL])
+	if svectors_uninitialized(y)
+		CR = PeriodicArray([TensorMap(ds->randn(scalartype(y), ds), space_l(item), space_l(item)) for item in AL])
+	else
+		CR = PeriodicArray([similar(y.s[i], scalartype(y)) for i in 1:length(AL)])
+	end
+	# CR = PeriodicArray([TensorMap(ds->randn(scalartype(y), ds), space_l(item), space_l(item)) for item in AL])
+	
 
 	# build initial random environment
 	A2 = x.data
@@ -52,10 +58,13 @@ function _iterative_compress!(y::InfiniteMPS, x::InfiniteMPS, alg::DMRG1)
 end
 
 function _svd_guess!(y::InfiniteMPS, trunc::TruncationScheme)
-	for i in 1:length(y)
-		y[i], s, v = stable_tsvd!(y[i], trunc=trunc)
-		v = s * v
-		y[i+1] = @tensor tmp[1,3;4] := v[1,2] * y[i+1][2,3,4]
+	for i in length(y):-1:1
+		u, s, v = stable_tsvd(y[i], (1,), (2,3), trunc=trunc)
+		y[i] = permute(v, (1,2), (3,))
+		s = normalize!(s)
+		u = u * s
+		y.s[i] = s
+		y[i-1] = @tensor tmp[1,2;4] := y[i-1][1,2,3] * u[3,4]
 	end
 	return y
 end
