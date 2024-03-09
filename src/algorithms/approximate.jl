@@ -16,12 +16,12 @@ function _iterative_compress!(y::InfiniteMPS, x::InfiniteMPS, alg::DMRG1)
 
 	AL = copy(y.data)
 	AR = copy(y.data)
-	if svectors_uninitialized(y)
-		CR = PeriodicArray([TensorMap(ds->randn(scalartype(y), ds), space_l(item), space_l(item)) for item in AL])
-	else
-		CR = PeriodicArray([similar(y.s[i], scalartype(y)) for i in 1:length(AL)])
-	end
-	# CR = PeriodicArray([TensorMap(ds->randn(scalartype(y), ds), space_l(item), space_l(item)) for item in AL])
+	# if svectors_uninitialized(y)
+	# 	CR = PeriodicArray([TensorMap(ds->randn(scalartype(y), ds), space_l(item), space_l(item)) for item in AL])
+	# else
+	# 	CR = PeriodicArray([similar(y.s[i], scalartype(y)) for i in 1:length(AL)])
+	# end
+	CR = PeriodicArray([TensorMap(ds->randn(scalartype(y), ds), space_l(item), space_l(item)) for item in AL])
 	
 
 	# build initial random environment
@@ -30,10 +30,11 @@ function _iterative_compress!(y::InfiniteMPS, x::InfiniteMPS, alg::DMRG1)
 	L = length(AL)
 
 	for itr in 1:alg.maxiter
-		CR_old = CR[1]
+		CR_old = normalize!(CR[1])
 		for j in 1:L
 			AC_j = ac_prime(A2[j], left[j], right[j])
 			AL[j], CR[j+1] = leftorth!(normalize!(AC_j), alg=QRpos())
+			# normalize!(CR[j+1])
 			Adata_i, Bdata_i = get_common_data(AL, A2, j, j)
 			left[j+1] = left[j] * TransferMatrix(Adata_i, Bdata_i)
 		end
@@ -41,6 +42,7 @@ function _iterative_compress!(y::InfiniteMPS, x::InfiniteMPS, alg::DMRG1)
 		for j in L:-1:1
 			AC_j = ac_prime(A2[j], left[j], right[j])
 			CR[j], AR_j = rightorth(normalize!(AC_j), (1,), (2,3), alg=LQpos())
+			# normalize!(CR[j])
 			AR[j] = permute(AR_j, (1,2), (3,))
 			Adata_i, Bdata_i = get_common_data(AR, A2, j, j)
 			right[j-1] =TransferMatrix(Adata_i, Bdata_i) * right[j]
@@ -53,6 +55,7 @@ function _iterative_compress!(y::InfiniteMPS, x::InfiniteMPS, alg::DMRG1)
 			break
 		end
 	end
+ 	# ismxiedcanonical(AL, CR, AR, tol=alg.toleig * 10000) || error("AL, CR, AR is not mixed-canonical")
 	y_new = get_imps!(AL.data, CR.data, AR.data, alg.trunc)
 	return y_new
 end

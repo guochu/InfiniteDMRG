@@ -50,26 +50,26 @@ function infinite_xxz_mpo_iterative()
 	initial_state = [-0.5, 0.5]
 	state = prodimps(ComplexF64, [pspace for i in 1:length(initial_state)], initial_state)
 
-	alg = DMRG1(D=100, verbosity=2)
+	alg = DMRG1(D=100, verbosity=0)
 	state = iterative_compress(state, alg)	
 
 	observers = [PartialMPO([sp, sp'], [1, 1+i]) for i in 1:10]
 	obs = [expectation_canonical(ob, state) for ob in observers]
 	for i in 1:10
 		state = mpo * state
-		# D = max(alg.D, bond_dimension(state))
-		# state = iterative_compress!(randomimps(scalartype(state), physical_spaces(state), D=D), state, alg)	
 		state = iterative_compress(state, alg)	
 		append!(obs, [expectation_canonical(ob, state) for ob in observers])
 	end	
 	return state, obs
 end
 
-@testset "TimeEvoMPO: compared with finite system" begin
+@testset "Approximate: SVD compression vs iterative compression" begin
     state1, obs1 = infinite_xxz_mpo_svd()
     # println(obs1)
     state2, obs2 = infinite_xxz_mpo_iterative()
     # println(obs2)
+    @test abs(norm(state1)-1) < 1.0e-6
+    @test abs(norm(state2)-1) < 1.0e-6
     @test distance(state1, state2) < 1.0e-4
     @test norm(obs1 - obs2) / norm(obs1) < 1.0e-2
 end
