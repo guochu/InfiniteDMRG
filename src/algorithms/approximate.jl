@@ -29,7 +29,9 @@ function _iterative_compress!(y::InfiniteMPS, x::InfiniteMPS, alg::DMRG1)
 	left, right = random_environments(AL, CR, AR, A2)
 	L = length(AL)
 
-	for itr in 1:alg.maxiter
+	delta = 2 * tol
+	itr = 0
+	while (itr < alg.maxiter) && (delta >= tol)
 		CR_old = normalize!(CR[1])
 		for j in 1:L
 			AC_j = ac_prime(A2[j], left[j], right[j])
@@ -50,11 +52,14 @@ function _iterative_compress!(y::InfiniteMPS, x::InfiniteMPS, alg::DMRG1)
 
 		delta = norm(CR_old - CR[1])
 		(alg.verbosity > 1) && println("Idmrg itr $(itr), err $(delta)")
-		if delta < tol
-			(alg.verbosity > 1) && println("Idmrg converges in itr $(itr) sweeps")
-			break
-		end
+		itr += 1
 	end
+	if (delta < tol) && (itr < alg.maxiter)
+		(alg.verbosity > 1) && println("Idmrg converges in itr $(itr) sweeps")
+	end
+    if (alg.verbosity > 0) && (delta >= alg.tol)
+        println("Idmrg fail to converge, required precision: $(alg.tol), actual precision $delta in $itr sweeps")
+    end
  	# ismxiedcanonical(AL, CR, AR, tol=alg.toleig * 10000) || error("AL, CR, AR is not mixed-canonical")
 	y_new = get_imps!(AL.data, CR.data, AR.data, alg.trunc)
 	return y_new
