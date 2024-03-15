@@ -26,7 +26,7 @@ using DMRG: updateright, updateleft, OverlapTransferMatrix, MatrixProductOrthogo
 
 #default settings
 module Defaults
-	const maxiter = 1000 # for Arnoldi iteration to find largest eigenpair
+	const maxiter = 10000 # for Arnoldi iteration to find largest eigenpair
 	const D = 100 # default bond dimension 
 	const tolgauge = 1e-14 # for MPS truncation
 	const tol = 1e-12 # for DMRG iteration
