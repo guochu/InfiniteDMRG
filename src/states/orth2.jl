@@ -1,103 +1,11 @@
-function mixedcanonicalize!(x::InfiniteMPS, alg::InfiniteOrthogonalize)
-    r = mixedcanonicalize(x, alg)
-    x.data[:] = r.data
-    x.svectors[:] = r.svectors
-    return x
-end
-function mixedcanonicalize(x::InfiniteMPS, alg::InfiniteOrthogonalize)
-    AL, CR, AR, η = mixedcanonicalize_util(x, alg)
-    ismxiedcanonical(AL, CR, AR, tol=alg.toleig * 10000) || error("AL, CR, AR is not mixed-canonical")
-    r = get_imps!(AL, CR, AR, alg.trunc)
-    if !alg.normalize
-        ηs = sqrt(real(η))
-        lmul!(ηs, r.s[1])
-        lmul!(ηs, r[1])
-    end
-    return r
-end
-
-# function TK.lmul!()
-    
+# function mixedcanonicalize!(x::InfiniteMPS, alg::InfiniteOrthogonalize)
+#     r = mixedcanonicalize(x, alg)
+#     x.data[:] = r.data
+#     x.svectors[:] = r.svectors
+#     return x
 # end
 
-function mixedcanonicalize_util(x::InfiniteMPS, alg::InfiniteOrthogonalize)
-    AL, _, left_eigenvalue = _leftorth(x.data.data, tol=alg.toleig, maxiter=alg.maxitereig)
-    # println("here: ", space_l(AL[1]), " ", space_r(AL[end]))
-    AR, CR, right_eigenvalue = _rightorth(AL, tol=alg.toleig, maxiter=alg.maxitereig)
-    (right_eigenvalue ≈ one(right_eigenvalue)) || error("right eigenvalue must be 1")
-    return AL, CR, AR, left_eigenvalue
-end
-
-function _leftorth(A; tol=Defaults.tolgauge, maxiter=Defaults.maxiter)
-    L = length(A)
-    cell = TransferMatrix(A, A)
-    vl = random_left_boundary(cell)
-    vl = vl * vl'
-    left_eigenvalue, left_eigenvector = largest_eigenpair(x -> x * cell, vl; tol=tol, maxiter=maxiter)
-    C1 = normalize!(chol_split(normalize_trace!(left_eigenvector), tol*10))
-
-    # C1 = normalize!(sqrt(normalize!(normalize_trace!(left_eigenvector))))
-    CR = Vector{typeof(C1)}(undef, L)
-    _Q1, C1 = leftorth!(C1, alg=QRpos())
-    CR[1] = C1
-    AL = similar.(A)
-    for loc in 1:L
-        @tensor tmp[1,3;4] := CR[loc][1,2] * A[loc][2,3,4]
-        Q, CR[mod1(loc+1, end)] = leftorth!(tmp, alg=QRpos())
-        normalize!(CR[mod1(loc+1, end)])
-        AL[loc] = Q
-    end
-
-    # # checking left-canonicality
-    # for loc in 1:L
-    #     tmp1 = AL[loc] * CR[mod1(loc+1, end)]
-    #     @tensor tmp2[1,3;4] := CR[loc][1,2] * A[loc][2,3,4]
-    #     normalize!(tmp2)
-    #     isapprox(tmp1, tmp2, rtol=tol*1000) || error("not left-canonical on site $loc")
-    # end
-    return AL, CR, left_eigenvalue
-end
-
-function _rightorth(A; tol=Defaults.tolgauge, maxiter=Defaults.maxiter)
-    L = length(A)
-    cell = TransferMatrix(A, A)
-    vr = random_right_boundary(cell)
-    # println("here: ", space(vr))
-    vr = vr * vr'
-    # vr = vr' * vr
-    right_eigenvalue, right_eigenvector = largest_eigenpair(x -> cell * x, vr; tol=tol, maxiter=maxiter)
-    C1 = copy(normalize!(chol_split(normalize_trace!(right_eigenvector), tol*10)'))
-
-    # C1 = normalize!(copy(sqrt(normalize_trace!(right_eigenvector))'))
-    CR = Vector{typeof(C1)}(undef, L)
-    C1, _ = rightorth!(C1, alg=LQpos())
-    CR[1] = C1
-    AR = similar.(A)
-    for loc in L:-1:1
-        @tensor tmp[1 ; 2 4] := A[loc][1,2,3] * CR[mod1(loc+1, end)][3,4]
-
-        # U, S, V = stable_tsvd!(tmp, trunc=trunc)
-        # AR[loc] = permute(V, (1,2), (3,))
-        # CR[loc] = U * S
-        # normalize && normalize!(CR[loc])
-
-        _L, Q = rightorth!(tmp, alg=LQpos())
-        AR[loc] = permute(Q, (1,2), (3,))
-        CR[loc] = _L
-        normalize!(CR[loc])
-    end
-
-    # # checking right-canonicality
-    # for loc in 1:L
-    #     tmp1 = A[loc] * CR[mod1(loc+1, end)]
-    #     @tensor tmp2[1,3;4] := CR[loc][1,2] * AR[loc][2,3,4]
-    #     isapprox(tmp1, tmp2, rtol=tol*1000) || error("not right-canonical on site $loc")
-    # end
-
-    return AR, CR, right_eigenvalue
-end
-
-function ismxiedcanonical(AL, CR, AR; tol=Defaults.tolgauge)
+function ismxiedcanonical(AL, CR, AR; tol::Real=Defaults.tolgauge)
     (length(AL) == length(CR) == length(AR)) || throw(ArgumentError("AL, CR, AR size mismatch"))
     for loc in 1:length(AL)
         # @tensor tmp1[1,2; 4] := AL[loc][1,2,3] * CR[mod1(loc+1, end)][3,4]
@@ -113,24 +21,183 @@ function ismxiedcanonical(AL, CR, AR; tol=Defaults.tolgauge)
     end
     return true
 end
+ismxiedcanonical(x::MixedCanonicalInfiniteMPS; kwargs...) = ismxiedcanonical(x.AL, x.CR, x.AR; kwargs...)
 
-function get_imps!(AL, CR, AR, trunc::TruncationScheme)
-    (length(AL) == length(CR) == length(AR)) || throw(DimensionMismatch())
-    U1, S1, V1o = stable_tsvd!(CR[1], trunc=trunc)
-    V1 = V1o
-    svectors = Vector{typeof(S1)}(undef, length(CR))
-    svectors[1] = S1
-    for loc in 2:length(CR)
-        U2, S2, V2 = stable_tsvd!(CR[loc], trunc=trunc)
-        @tensor tmp[1,3;5] := V1[1,2] * AR[loc-1][2,3,4] * V2'[4,5]
-        svectors[loc] = S2
-        AR[loc-1] = tmp
-        V1 = V2
-    end
-    @tensor tmp[1,3;5] := V1[1,2] * AR[end][2,3,4] * V1o'[4,5]
-    AR[end] = tmp
-    return InfiniteMPS(AR, svectors)
+
+function mixedcanonicalize(x::InfiniteMPS, alg::InfiniteOrthogonalize)
+    alg.normalize || @warn "normalization is enforced"
+    AL = x.data.data
+    AR = copy(AL)
+    CR = [TensorMap(randn, scalartype(x), space_l(item), space_l(item)) for item in AL]
+    AL, CR, AR = mixedcanonicalize!(AL, CR, AR, alg)
+    return MixedCanonicalInfiniteMPS(AL, CR, AR)
 end
+function mixedcanonicalize!(x::MixedCanonicalInfiniteMPS, alg::InfiniteOrthogonalize)
+    alg.normalize || @warn "normalization is enforced"
+    mixedcanonicalize!(x.AL.data, x.CR.data, x.AR.data, alg)
+    return x
+end
+mixedcanonicalize(x::MixedCanonicalInfiniteMPS, alg::InfiniteOrthogonalize) = mixedcanonicalize!(copy(x), alg)
+
+function mixedcanonicalize!(AL, CR, AR, alg::InfiniteOrthogonalize)
+    AL, CR = _leftorth!(AL, CR, AR, CR[1], tol=alg.toleig, maxiter=alg.maxitereig)
+    AR, CR = _rightorth!(AR, CR, AL, CR[1], tol=alg.toleig, maxiter=alg.maxitereig)
+    return AL, CR, AR
+end
+
+"""
+    solves AL * C = C * A in-place
+"""
+function _leftorth!(AL, CR, A, C₀; tol=Defaults.tolgauge, maxiter=Defaults.maxiter, eig_miniter::Int=10)
+    L = length(A)
+    CR[1] = normalize!(C₀)
+
+    iteration = 1
+    delta = 2 * tol
+
+    while iteration < maxiter && delta > tol
+        if iteration > eig_miniter #when qr starts to fail, start using eigs - should be kw arg
+            alg = Arnoldi(; krylovdim=30, tol=max(delta * delta, tol / 10), maxiter=maxiter)
+
+            cell = TransferMatrix(AL, A)
+            (vals, vecs) = fixedpoint(x -> x * cell, CR[1], :LM, alg)
+            (_, CR[1]) = leftorth!(vecs; alg=QRpos())
+        end
+
+        cold = CR[1]
+
+        for loc in 1:L
+            @tensor tmp[1,3;4] := CR[loc][1,2] * A[loc][2,3,4]
+            Q, CR[mod1(loc+1, end)] = leftorth!(tmp, alg=QRpos())
+            normalize!(CR[mod1(loc+1, end)])
+            AL[loc] = Q
+        end
+
+        #update delta
+        if domain(cold) == domain(CR[1]) && codomain(cold) == codomain(CR[1])
+            delta = norm(cold - CR[1])
+        end
+
+        iteration += 1
+    end
+    # (delta <= tol) && println("leftorth convrged in $iteration iterations")
+
+    delta > tol && @warn "leftorth failed to converge in $(iteration) iterations, error $(delta)"
+
+    return AL, CR
+end
+
+
+function _rightorth!(AR, CR, A, C₀; tol=Defaults.tolgauge, maxiter=Defaults.maxiter, eig_miniter::Int=10)
+    L = length(A)
+    CR[1] = normalize!(C₀)
+
+    iteration = 1
+    delta = 2 * tol
+    while iteration < maxiter && delta > tol
+        if iteration > eig_miniter#when qr starts to fail, start using eigs
+            alg = Arnoldi(; krylovdim=30, tol=max(delta * delta, tol / 10), maxiter=maxiter)
+            #Projection of the current guess onto its largest self consistent eigenvector + isolation of the unitary part
+
+            cell = TransferMatrix(AR, A)
+            (vals, vecs) = fixedpoint(x -> cell * x, CR[1], :LM, alg)
+            (CR[1], _) = rightorth!(vecs; alg=LQpos())
+        end
+
+        cold = CR[1]
+        for loc in L:-1:1
+            @tensor tmp[1 ; 2 4] := A[loc][1,2,3] * CR[mod1(loc+1, end)][3,4]
+
+
+            _L, Q = rightorth!(tmp, alg=LQpos())
+            AR[loc] = permute(Q, (1,2), (3,))
+            CR[loc] = _L
+            normalize!(CR[loc])
+        end
+
+        #update counters and delta
+        if domain(cold) == domain(CR[1]) && codomain(cold) == codomain(CR[1])
+            delta = norm(cold - CR[1])
+        end
+
+        iteration += 1
+    end
+    # (delta <= tol) && println("rightorth convrged in $iteration iterations")
+
+    delta > tol && @warn "rightorth failed to converge in $(iteration) iterations, error $(delta)"
+
+    return AR, CR
+end
+
+# function _leftorth(A; tol=Defaults.tolgauge, maxiter=Defaults.maxiter)
+#     L = length(A)
+#     cell = TransferMatrix(A, A)
+#     vl = random_left_boundary(cell)
+#     vl = vl * vl'
+#     left_eigenvalue, left_eigenvector = largest_eigenpair(x -> x * cell, vl; tol=tol, maxiter=maxiter)
+#     C1 = normalize!(chol_split(normalize_trace!(left_eigenvector), tol*10))
+
+#     # C1 = normalize!(sqrt(normalize!(normalize_trace!(left_eigenvector))))
+#     CR = Vector{typeof(C1)}(undef, L)
+#     _Q1, C1 = leftorth!(C1, alg=QRpos())
+#     CR[1] = C1
+#     AL = similar.(A)
+#     for loc in 1:L
+#         @tensor tmp[1,3;4] := CR[loc][1,2] * A[loc][2,3,4]
+#         Q, CR[mod1(loc+1, end)] = leftorth!(tmp, alg=QRpos())
+#         normalize!(CR[mod1(loc+1, end)])
+#         AL[loc] = Q
+#     end
+
+#     # # checking left-canonicality
+#     # for loc in 1:L
+#     #     tmp1 = AL[loc] * CR[mod1(loc+1, end)]
+#     #     @tensor tmp2[1,3;4] := CR[loc][1,2] * A[loc][2,3,4]
+#     #     normalize!(tmp2)
+#     #     isapprox(tmp1, tmp2, rtol=tol*1000) || error("not left-canonical on site $loc")
+#     # end
+#     return AL, CR, left_eigenvalue
+# end
+
+# function _rightorth(A; tol=Defaults.tolgauge, maxiter=Defaults.maxiter)
+#     L = length(A)
+#     cell = TransferMatrix(A, A)
+#     vr = random_right_boundary(cell)
+#     # println("here: ", space(vr))
+#     vr = vr * vr'
+#     # vr = vr' * vr
+#     right_eigenvalue, right_eigenvector = largest_eigenpair(x -> cell * x, vr; tol=tol, maxiter=maxiter)
+#     C1 = copy(normalize!(chol_split(normalize_trace!(right_eigenvector), tol*10)'))
+
+#     # C1 = normalize!(copy(sqrt(normalize_trace!(right_eigenvector))'))
+#     CR = Vector{typeof(C1)}(undef, L)
+#     C1, _ = rightorth!(C1, alg=LQpos())
+#     CR[1] = C1
+#     AR = similar.(A)
+#     for loc in L:-1:1
+#         @tensor tmp[1 ; 2 4] := A[loc][1,2,3] * CR[mod1(loc+1, end)][3,4]
+
+#         # U, S, V = stable_tsvd!(tmp, trunc=trunc)
+#         # AR[loc] = permute(V, (1,2), (3,))
+#         # CR[loc] = U * S
+#         # normalize && normalize!(CR[loc])
+
+#         _L, Q = rightorth!(tmp, alg=LQpos())
+#         AR[loc] = permute(Q, (1,2), (3,))
+#         CR[loc] = _L
+#         normalize!(CR[loc])
+#     end
+
+#     # # checking right-canonicality
+#     # for loc in 1:L
+#     #     tmp1 = A[loc] * CR[mod1(loc+1, end)]
+#     #     @tensor tmp2[1,3;4] := CR[loc][1,2] * AR[loc][2,3,4]
+#     #     isapprox(tmp1, tmp2, rtol=tol*1000) || error("not right-canonical on site $loc")
+#     # end
+
+#     return AR, CR, right_eigenvalue
+# end
+
 
 # function get_imps!(AL, CR, AR, trunc::TruncationScheme)
 #     U1, S1, V1o = stable_tsvd!(CR[1], trunc=trunc)

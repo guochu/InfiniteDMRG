@@ -3,6 +3,7 @@ module InfiniteDMRG
 
 # infinite MPS
 export AbstractInfiniteMPS, InfiniteMPS, prodimps, randomimps, unitcell_size, InfiniteOrthogonalize
+export mixedcanonicalize, mixedcanonicalize!, ismxiedcanonical, fixedpoint
 
 # infinite MPO
 export InfiniteMPO, randomimpo

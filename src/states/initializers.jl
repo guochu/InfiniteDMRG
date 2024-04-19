@@ -7,20 +7,23 @@ function InfiniteMPS(f, ::Type{T}, physpaces::AbstractVector{S}, virtualpaces::A
 	data = [TensorMap(f, T, virtualpaces2[i] ⊗ physpaces[i] ← virtualpaces2[i+1]) for i in 1:length(physpaces)]
 	return InfiniteMPS(data)
 end
+InfiniteMPS(f, ::Type{T}, physpaces::AbstractVector{S}, vspace::S) where {T <: Number, S <: ElementarySpace} = InfiniteMPS(
+					f, T, physpaces, [vspace for i in 1:length(physpaces)])
 
-function InfiniteMPS(f, ::Type{T}, physpaces::AbstractVector{S}, maxvirtualspace::S; right::S=oneunit(S)) where {T <: Number, S <: ElementarySpace}
-	L = length(physpaces)
-	virtualpaces = Vector{S}(undef, L+1)
-	virtualpaces[1] = right
-	for i in 2:L
-		virtualpaces[i] = infimum(fuse(virtualpaces[i-1], physpaces[i-1]), maxvirtualspace)
-	end
-	virtualpaces[L+1] = right
-	for i in L-1:-1:2
-		virtualpaces[i] = infimum(virtualpaces[i], fuse(physpaces[i]', virtualpaces[i+1]))
-	end
-	return InfiniteMPS(f, T, physpaces, virtualpaces[1:L])
-end
+
+# function InfiniteMPS(f, ::Type{T}, physpaces::AbstractVector{S}, maxvirtualspace::S; right::S=oneunit(S)) where {T <: Number, S <: ElementarySpace}
+# 	L = length(physpaces)
+# 	virtualpaces = Vector{S}(undef, L+1)
+# 	virtualpaces[1] = right
+# 	for i in 2:L
+# 		virtualpaces[i] = infimum(fuse(virtualpaces[i-1], physpaces[i-1]), maxvirtualspace)
+# 	end
+# 	virtualpaces[L+1] = right
+# 	for i in L-1:-1:2
+# 		virtualpaces[i] = infimum(virtualpaces[i], fuse(physpaces[i]', virtualpaces[i+1]))
+# 	end
+# 	return InfiniteMPS(f, T, physpaces, virtualpaces[1:L])
+# end
 
 
 function prodimps(::Type{T}, physpaces::AbstractVector{S}, physectors::AbstractVector; right::S=oneunit(S)) where {T <: Number, S <: ElementarySpace}

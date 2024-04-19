@@ -42,3 +42,32 @@ println("------------------------------------")
 	end
 
 end
+
+
+@testset "Infinite MPS: Orthogonalization" begin
+	tol = 1.0e-7
+	for L in 2:4
+		pspace = Rep[ℤ₂](0=>1, 1=>1)
+		vspace = Rep[ℤ₂](0=>4, 1=>4)
+
+		mps = InfiniteMPS(randn, Float64, [pspace for i in 1:L], vspace)
+		orth = InfiniteOrthogonalize(Orthogonalize(trunc = truncdimcutoff(D=200, ϵ=1.0e-8, add_back=0), normalize=true))
+		mps0 = copy(mps)
+		canonicalize!(mps0, orth)
+
+		@test abs(norm(mps0)-1) < tol
+		@test !isleftcanonical(mps0)
+		@test isrightcanonical(mps0)
+		@test iscanonical(mps0)
+
+		mps = InfiniteMPS(mixedcanonicalize(mps, orth), trunc=orth.trunc)
+
+		@test abs(norm(mps)-1) < tol
+		@test !isleftcanonical(mps)
+		@test isrightcanonical(mps)
+		@test iscanonical(mps)
+
+		@test distance(mps, mps0) < tol
+	end
+
+end
