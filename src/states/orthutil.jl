@@ -92,33 +92,21 @@ function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
     return Diagonal(sqrt.(evals[k:end])) * evecs[:, k:end]'
 end
 
+
 function chol_split(m::MPSBondTensor{S}, tol::Real) where {S}
-    r = zero(m)
+    r = TK.SectorDict{sectortype(S), Matrix{scalartype(m)}}()
+    dims = TK.SectorDict{sectortype(S), Int}()
     for (c, b) in blocks(m)
     	b2 = chol_split(b, tol)
     	if !isempty(b2)
-    		copy!(block(r, c), b2)
     		# println(c, " ", size(b2))
+    		r[c] = b2
+    		dims[c] = size(b2, 1)
     	end
     end
-    return r
+    W = S(dims)
+    return TensorMap(r, W, domain(m))
 end
-
-
-# function chol_split(m::MPSBondTensor{S}, tol::Real) where {S}
-#     r = empty(m.data)
-#     dims = TK.SectorDict{sectortype(S), Int}()
-#     for (c, b) in blocks(m)
-#     	b2 = chol_split(b, tol)
-#     	if !isempty(b2)
-#     		# println(c, " ", size(b2))
-#     		r[c] = b2
-#     		dims[c] = size(b2, 1)
-#     	end
-#     end
-#     W = S(dims)
-#     return TensorMap(r, W, domain(m))
-# end
 
 # function chol_split(m::AbstractMatrix{<:Number})
 #     evals, evecs = eigen(Hermitian(m))
