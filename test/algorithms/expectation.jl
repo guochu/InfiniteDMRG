@@ -13,7 +13,7 @@ println("------------------------------------")
 	for (pspace, vspace) in zip(pspaces, vspaces)
 		for T in (Float64, ComplexF64)
 			psi = InfiniteMPS(randn, T, [pspace for i in 1:4], [vspace for i in 1:4])
-			sp = TensorMap(randn, T, oneunit(vspace) ⊗ pspace, vspace ⊗ pspace)
+			sp = randn(T, oneunit(vspace) ⊗ pspace, vspace ⊗ pspace)
 			observers = [PartialMPO([sp, sp'], [1, i+1]) for i in 1:30]
 			# observables
 			envs = environments(psi, psi)

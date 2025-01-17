@@ -14,7 +14,7 @@ function InfiniteMPO(h::MPOHamiltonian)
 	embedders = PeriodicArray([right_embedders(T, h[i].rightspaces...) for i in 1:length(h)])
 
 	for n in 1:L
-		tmp = TensorMap(zeros, T, space(embedders[n-1][1], 2)' * h[n].pspace ← space(embedders[n][1], 2)' * h[n].pspace )
+		tmp = zeros(T, space(embedders[n-1][1], 2)' * h[n].pspace ← space(embedders[n][1], 2)' * h[n].pspace )
 		for (i, j) in DMRG.opkeys(h[n])
 			@tensor tmp[-1, -2, -3, -4] += conj(embedders[n-1][i][1, -1]) * h[n, i, j][1,-2,2,-4] * embedders[n][j][2, -3]
 		end
@@ -33,7 +33,7 @@ function InfiniteMPO(f, ::Type{T}, physpaces::Vector{S}, virtualpaces::Vector{S}
 	L = length(physpaces)
 	any(x -> dim(x)==0, virtualpaces) &&  @warn "auxiliary space is empty"
 	virtualpaces2 = PeriodicArray(virtualpaces)
-	data = [TensorMap(f, T, virtualpaces2[i] ⊗ physpaces[i] ← virtualpaces2[i+1] ⊗ physpaces[i] ) for i in 1:L]
+	data = [f(T, virtualpaces2[i] ⊗ physpaces[i] ← virtualpaces2[i+1] ⊗ physpaces[i] ) for i in 1:L]
 	return InfiniteMPO(data)
 end
 

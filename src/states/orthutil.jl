@@ -71,7 +71,7 @@ function normalize_trace!(x::TensorMap)
 end
 function normalize_angle!(x::TensorMap)
 	v = argmax(abs, argmax(abs, y[2]) for y in blocks(x) ) 
-	return lmul!(conj(TK._safesign(v)), x)
+	return lmul!(conj(TK.MatrixAlgebra.safesign(v)), x)
 end
 
 const CHOL_SPLIT_TOL = 1.0e-12
@@ -93,19 +93,32 @@ function chol_split(m::AbstractMatrix{<:Number}, tol::Real)
 end
 
 function chol_split(m::MPSBondTensor{S}, tol::Real) where {S}
-    r = empty(m.data)
-    dims = TK.SectorDict{sectortype(S), Int}()
+    r = zero(m)
     for (c, b) in blocks(m)
     	b2 = chol_split(b, tol)
     	if !isempty(b2)
+    		copy!(block(r, c), b2)
     		# println(c, " ", size(b2))
-    		r[c] = b2
-    		dims[c] = size(b2, 1)
     	end
     end
-    W = S(dims)
-    return TensorMap(r, W, domain(m))
+    return r
 end
+
+
+# function chol_split(m::MPSBondTensor{S}, tol::Real) where {S}
+#     r = empty(m.data)
+#     dims = TK.SectorDict{sectortype(S), Int}()
+#     for (c, b) in blocks(m)
+#     	b2 = chol_split(b, tol)
+#     	if !isempty(b2)
+#     		# println(c, " ", size(b2))
+#     		r[c] = b2
+#     		dims[c] = size(b2, 1)
+#     	end
+#     end
+#     W = S(dims)
+#     return TensorMap(r, W, domain(m))
+# end
 
 # function chol_split(m::AbstractMatrix{<:Number})
 #     evals, evecs = eigen(Hermitian(m))

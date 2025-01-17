@@ -21,7 +21,7 @@ function _iterative_compress!(y::InfiniteMPS, x::InfiniteMPS, alg::DMRG1)
 	# else
 	# 	CR = PeriodicArray([similar(y.s[i], scalartype(y)) for i in 1:length(AL)])
 	# end
-	CR = PeriodicArray([TensorMap(ds->randn(scalartype(y), ds), space_l(item), space_l(item)) for item in AL])
+	CR = PeriodicArray([randn(scalartype(y), space_l(item), space_l(item)) for item in AL])
 	
 
 	# build initial random environment

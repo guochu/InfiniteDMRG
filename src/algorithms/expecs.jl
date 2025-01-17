@@ -38,4 +38,4 @@ function num_period(_start::Int, _stop::Int, unitcellsize::Int)
 end
 num_period(m::PartialMPO, unitcellsize::Int) = num_period(positions(m)[1], positions(m)[end], unitcellsize)
 DMRG.value(x::InfiniteOverlapCache, m::PartialMPO) = value(x, num_period(m, unitcell_size(x)))
-get_trivial_leg(m::AbstractTensorMap) = TensorMap(ones,scalartype(m),oneunit(space(m,1)), one(space(m,1)))
+get_trivial_leg(m::AbstractTensorMap) = ones(scalartype(m),oneunit(space(m,1)), one(space(m,1)))

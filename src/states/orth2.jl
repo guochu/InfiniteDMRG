@@ -28,7 +28,7 @@ function mixedcanonicalize(x::InfiniteMPS, alg::InfiniteOrthogonalize)
     alg.normalize || @warn "normalization is enforced"
     AL = x.data.data
     AR = copy(AL)
-    CR = [TensorMap(randn, scalartype(x), space_l(item), space_l(item)) for item in AL]
+    CR = [randn(scalartype(x), space_l(item), space_l(item)) for item in AL]
     AL, CR, AR = mixedcanonicalize!(AL, CR, AR, alg)
     return MixedCanonicalInfiniteMPS(AL, CR, AR)
 end

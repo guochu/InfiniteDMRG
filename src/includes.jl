@@ -1,15 +1,15 @@
 using Logging: @warn
-using Reexport, KrylovKit
-@reexport using SphericalTensors, DMRG
-using SphericalTensors: QR, LQ, SVD
-const TK = SphericalTensors
+using Reexport, KrylovKit, TensorKit
+@reexport using DMRG
+using TensorKit: QR, LQ, SVD
+const TK = TensorKit
 using LinearAlgebra: eigen, Hermitian
 using DMRG: left_embedders, right_embedders
 using DMRG: updateright, updateleft, OverlapTransferMatrix, MatrixProductOrthogonalAlgorithm
 
 #default settings
 module Defaults
-	const maxiter = 500 # for Arnoldi iteration to find largest eigenpair
+	const maxiter = 10000 # for Arnoldi iteration to find largest eigenpair
 	const D = 100 # default bond dimension 
 	const tolgauge = 1e-14 # for MPS truncation
 	const tol = 1e-12 # for DMRG iteration

@@ -17,10 +17,10 @@ export iterative_compress!, iterative_compress
 
 
 using Logging: @warn
-using Reexport, KrylovKit
-@reexport using SphericalTensors, DMRG
-using SphericalTensors: QR, LQ, SVD
-const TK = SphericalTensors
+using Reexport, KrylovKit, TensorKit
+@reexport using DMRG
+using TensorKit: QR, LQ, SVD
+const TK = TensorKit
 using LinearAlgebra: eigen, Hermitian
 using DMRG: left_embedders, right_embedders
 using DMRG: updateright, updateleft, OverlapTransferMatrix, MatrixProductOrthogonalAlgorithm

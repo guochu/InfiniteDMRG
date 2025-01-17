@@ -4,7 +4,7 @@ function InfiniteMPS(f, ::Type{T}, physpaces::AbstractVector{S}, virtualpaces::A
 	@assert length(physpaces) == length(virtualpaces)
 	any(x -> dim(x)==0, virtualpaces) &&  @warn "auxiliary space is empty"
 	virtualpaces2 = PeriodicArray(virtualpaces)
-	data = [TensorMap(f, T, virtualpaces2[i] ⊗ physpaces[i] ← virtualpaces2[i+1]) for i in 1:length(physpaces)]
+	data = [f(T, virtualpaces2[i] ⊗ physpaces[i] ← virtualpaces2[i+1]) for i in 1:length(physpaces)]
 	return InfiniteMPS(data)
 end
 InfiniteMPS(f, ::Type{T}, physpaces::AbstractVector{S}, vspace::S) where {T <: Number, S <: ElementarySpace} = InfiniteMPS(
