@@ -1,3 +1,8 @@
+name = "InfiniteDMRG"
+uuid = "212084a2-8c7a-4da0-9d18-e361268e324c"
+authors = ["Guo Chu <guochu604b@gmail.com>"]
+version = "0.0.1"
+
 [deps]
 DMRG = "1240110f-4488-488b-9691-4f58b4220f75"
 KrylovKit = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
