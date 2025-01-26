@@ -3,11 +3,12 @@ struct InfiniteOrthogonalize{T<:TruncationScheme} <: MatrixProductOrthogonalAlgo
 	normalize::Bool
 	toleig::Float64 
 	maxitereig::Int 
+	verbosity::Int
 end
-InfiniteOrthogonalize(; trunc::TruncationScheme=DefaultTruncation, normalize::Bool=true, toleig::Real=Defaults.tolgauge, maxitereig::Int=Defaults.maxiter) = InfiniteOrthogonalize(
-	trunc, normalize, convert(Float64, toleig), maxitereig)
+InfiniteOrthogonalize(; trunc::TruncationScheme=DefaultTruncation, normalize::Bool=true, toleig::Real=Defaults.tolgauge, maxitereig::Int=Defaults.maxiter,
+						verbosity::Int=0) = InfiniteOrthogonalize(trunc, normalize, convert(Float64, toleig), maxitereig, verbosity)
 InfiniteOrthogonalize(alg::Orthogonalize; toleig::Real=Defaults.tolgauge, maxitereig::Int=Defaults.maxiter) = InfiniteOrthogonalize(
-						trunc=alg.trunc, normalize=alg.normalize, toleig=toleig, maxitereig=maxitereig)
+						trunc=alg.trunc, normalize=alg.normalize, toleig=toleig, maxitereig=maxitereig, verbosity=alg.verbosity)
 
 function leading_boundaries(tn::InfiniteMPS; kwargs...) 
 	Adata = [tn[i] for i in 1:unitcell_size(tn)]
