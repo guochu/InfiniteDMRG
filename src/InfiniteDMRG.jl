@@ -65,5 +65,6 @@ include("envs/environments.jl")
 include("algorithms/expecs.jl")
 # include("algorithms/tdvp.jl")
 include("algorithms/approximate.jl")
+include("algorithms/approximate2.jl")
 
 end
