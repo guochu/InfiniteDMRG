@@ -85,11 +85,7 @@ function iterative_compress!(x::InfiniteMPS, y::MixedCanonicalInfiniteMPS, alg::
 		(alg.verbosity > 2) && println("Idmrg itr $(itr), err $(delta)")
 		itr += 1
 	end
-	if (alg.verbosity >= 3)
-        pic = plot(log.(errs))
-        show(pic)
-        println()
-    end
+	alg.callback(errs)
 
 	if (delta < tol) && (itr < alg.maxiter)
 		(alg.verbosity > 1) && println("Idmrg converges in itr $(itr) sweeps")
